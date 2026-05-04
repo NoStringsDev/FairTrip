@@ -4,10 +4,24 @@
 
 New trips walk you through name & notes, headcount (optional), currencies, and 2–6 balance groups. **Add expense** is a large floating action on Balance and History; receipts support **camera** or **photo library**.
 
+## Publish to GitHub
+
+This repo is initialized with Git on `main`. To host it on GitHub:
+
+1. Create a new empty repository on GitHub (e.g. named `fair-trip`).
+2. From this project directory:
+
+```bash
+git remote add origin https://github.com/YOUR_USER/fair-trip.git
+git push -u origin main
+```
+
+(Use SSH remote URL instead if you prefer.)
+
 ## Local development
 
 ```bash
-git clone <your-repo-url> fair-trip
+git clone https://github.com/YOUR_USER/fair-trip.git
 cd fair-trip
 npm install
 npm run dev
