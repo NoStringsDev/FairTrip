@@ -1,0 +1,15 @@
+name = "fair-trip-api"
+main = "src/index.ts"
+compatibility_date = "2025-05-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "fair-trip-db"
+database_id = "local-dev-replace-me"
+
+[[r2_buckets]]
+binding = "RECEIPTS"
+bucket_name = "fair-trip-receipts"
+
+[vars]
+# Set CORS origin in production via wrangler secret or vars

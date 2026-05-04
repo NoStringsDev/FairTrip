@@ -1,0 +1,41 @@
+{
+  "name": "fair-trip",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "deploy:worker": "npm run build && cd worker && npx wrangler deploy",
+    "cf:dev": "concurrently \"vite\" \"cd worker && npx wrangler dev\""
+  },
+  "dependencies": {
+    "dexie": "^4.0.10",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "tesseract.js": "^5.1.1"
+  },
+  "devDependencies": {
+    "wrangler": "^3.99.0",
+    "@eslint/js": "^9.15.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "concurrently": "^9.1.0",
+    "eslint": "^9.15.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.14",
+    "globals": "^15.12.0",
+    "typescript": "~5.6.2",
+    "typescript-eslint": "^8.15.0",
+    "vite": "^5.4.11",
+    "vite-plugin-pwa": "^0.21.0",
+    "vitest": "^2.1.5",
+    "workbox-window": "^7.3.0"
+  }
+}
