@@ -1,4 +1,4 @@
-ALTER TABLE trips ADD COLUMN entities_json TEXT;
-ALTER TABLE trips ADD COLUMN supported_currencies_json TEXT;
-ALTER TABLE trips ADD COLUMN participant_count INTEGER;
-ALTER TABLE trips ADD COLUMN trip_notes TEXT;
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS entities_json TEXT;
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS supported_currencies_json TEXT;
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS participant_count INTEGER;
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS trip_notes TEXT;

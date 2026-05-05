@@ -5,11 +5,11 @@ compatibility_date = "2025-05-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "fair-trip-db"
-database_id = "local-dev-replace-me"
+database_id = "b302b6db-9fcc-4bf7-a6e6-f6a31b05c036"
 
 [[r2_buckets]]
 binding = "RECEIPTS"
-bucket_name = "fair-trip-receipts"
+bucket_name = "fairtrip-reciepts"
 
 [vars]
 # Set CORS origin in production via wrangler secret or vars
