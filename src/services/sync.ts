@@ -1,17 +1,23 @@
 /**
- * Optional Cloudflare Worker sync. If VITE_API_URL is unset, only local IndexedDB is used.
+ * API base URL:
+ * - VITE_API_URL when explicitly configured
+ * - same-origin in production (single Worker serving app + API)
+ * - disabled in local Vite dev unless env var is set
  */
 import type { QuoteCurrency } from "../types";
 
-const API = (import.meta.env.VITE_API_URL as string | undefined) || "";
+const API =
+  (import.meta.env.VITE_API_URL as string | undefined) ||
+  (import.meta.env.PROD ? "" : null);
+const API_PREFIX = API === null ? null : `${API}/api`;
 
 export function syncEnabled(): boolean {
-  return Boolean(API);
+  return API_PREFIX !== null;
 }
 
 export async function pushTripAndExpenses(payload: unknown): Promise<void> {
-  if (!API) return;
-  const res = await fetch(`${API}/api/sync/push`, {
+  if (!API_PREFIX) return;
+  const res = await fetch(`${API_PREFIX}/sync/push`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -23,9 +29,9 @@ export async function pushTripAndExpenses(payload: unknown): Promise<void> {
 }
 
 export async function pullTrip(tripCode: string): Promise<unknown | null> {
-  if (!API) return null;
+  if (!API_PREFIX) return null;
   const res = await fetch(
-    `${API}/api/sync/pull?tripCode=${encodeURIComponent(tripCode)}`
+    `${API_PREFIX}/sync/pull?tripCode=${encodeURIComponent(tripCode)}`
   );
   if (!res.ok) return null;
   return res.json();
@@ -36,12 +42,12 @@ export async function uploadReceipt(
   expenseId: string,
   file: Blob
 ): Promise<{ r2Key: string } | null> {
-  if (!API) return null;
+  if (!API_PREFIX) return null;
   const fd = new FormData();
   fd.append("tripCode", tripCode);
   fd.append("expenseId", expenseId);
   fd.append("file", file, "receipt.jpg");
-  const res = await fetch(`${API}/api/receipts`, { method: "POST", body: fd });
+  const res = await fetch(`${API_PREFIX}/receipts`, { method: "POST", body: fd });
   if (!res.ok) return null;
   return res.json() as Promise<{ r2Key: string }>;
 }
@@ -54,9 +60,9 @@ export async function fetchFxFromServer(
   rateDate: string;
   retrievalType: string;
 } | null> {
-  if (!API) return null;
+  if (!API_PREFIX) return null;
   const res = await fetch(
-    `${API}/api/fx?date=${encodeURIComponent(isoDate)}&currency=${encodeURIComponent(currency)}`
+    `${API_PREFIX}/fx?date=${encodeURIComponent(isoDate)}&currency=${encodeURIComponent(currency)}`
   );
   if (!res.ok) return null;
   return res.json() as Promise<{

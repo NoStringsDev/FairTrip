@@ -1,6 +1,7 @@
 export interface Env {
   DB: D1Database;
   RECEIPTS: R2Bucket;
+  ASSETS: Fetcher;
 }
 
 // Minimal ambient types so the repo typechecks without Cloudflare-specific tooling.
@@ -20,6 +21,9 @@ declare global {
       value: ReadableStream | ArrayBuffer | Blob,
       options?: { httpMetadata?: { contentType?: string } }
     ): Promise<unknown>;
+  }
+  interface Fetcher {
+    fetch(request: Request): Promise<Response>;
   }
 }
 
@@ -277,7 +281,19 @@ export default {
         return json({ r2Key: key }, env, origin);
       }
 
-      return new Response("Not found", { status: 404, headers: corsHeaders(origin) });
+      if (request.method === "GET" || request.method === "HEAD") {
+        const assetRes = await env.ASSETS.fetch(request);
+        if (assetRes.status !== 404) return assetRes;
+        const wantsHtml = (request.headers.get("accept") ?? "").includes("text/html");
+        if (wantsHtml && !url.pathname.startsWith("/api/")) {
+          return env.ASSETS.fetch(new Request(new URL("/", url.origin), request));
+        }
+      }
+
+      return new Response("Not found", {
+        status: 404,
+        headers: url.pathname.startsWith("/api/") ? corsHeaders(origin) : undefined,
+      });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "error";
       return json({ error: msg }, env, origin, 500);
