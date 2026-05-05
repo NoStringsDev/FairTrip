@@ -1,5 +1,26 @@
 /** ISO currencies supported for entry (FX auto for non-GBP via Frankfurter where available). */
-export type CurrencyCode = "GBP" | "JPY" | "EUR" | "USD";
+export type CurrencyCode =
+  | "GBP"
+  | "USD"
+  | "EUR"
+  | "JPY"
+  | "AUD"
+  | "CAD"
+  | "NZD"
+  | "CHF"
+  | "SEK"
+  | "NOK"
+  | "DKK"
+  | "PLN"
+  | "CZK"
+  | "HUF"
+  | "RON"
+  | "TRY"
+  | "CNY"
+  | "HKD"
+  | "SGD"
+  | "KRW"
+  | "INR";
 
 export type QuoteCurrency = Exclude<CurrencyCode, "GBP">;
 

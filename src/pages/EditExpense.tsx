@@ -23,7 +23,7 @@ export function EditExpense() {
 
   const [expense, setExpense] = useState<Expense | null>(null);
   const [amount, setAmount] = useState("");
-  const [currency, setCurrency] = useState<CurrencyCode>("JPY");
+  const [currency, setCurrency] = useState<CurrencyCode>(trip.tripCurrency);
   const [payer, setPayer] = useState("");
   const [splitMode, setSplitMode] = useState<SplitMode>("shared_equal");
   const [beneficiary, setBeneficiary] = useState("");

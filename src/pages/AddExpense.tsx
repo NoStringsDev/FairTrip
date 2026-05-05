@@ -23,8 +23,8 @@ export function AddExpense() {
 
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState<CurrencyCode>(
-    trip.supportedCurrencies.includes("JPY")
-      ? "JPY"
+    trip.supportedCurrencies.includes(trip.tripCurrency)
+      ? trip.tripCurrency
       : trip.supportedCurrencies[0] ?? "GBP"
   );
   const [payer, setPayer] = useState(trip.entities[0]?.id ?? "");
@@ -208,7 +208,9 @@ export function AddExpense() {
             inputMode="decimal"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            placeholder={currency === "JPY" ? "e.g. 2480" : "e.g. 12.50"}
+            placeholder={
+              minorUnitsFor(currency) === 1 ? "e.g. 2480" : "e.g. 12.50"
+            }
           />
         </div>
 

@@ -4,45 +4,63 @@ import { db } from "../db/database";
 import { generateTripCode, newId } from "../utils/id";
 import type { CurrencyCode, EntityKind, Trip, TripEntity } from "../types";
 import { schedulePush } from "../services/tripSync";
-
-const ALL_CURRENCIES: CurrencyCode[] = ["GBP", "JPY", "EUR", "USD"];
+import {
+  CURRENCY_OPTIONS,
+  DEFAULT_HOME_CURRENCY,
+  DEFAULT_TRIP_CURRENCY,
+} from "../domain/currencies";
+import { ENTITY_PALETTE } from "../theme/entities";
 
 export function CreateTrip() {
   const nav = useNavigate();
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
 
-  const [tripName, setTripName] = useState("Japan trip");
+  const [tripName, setTripName] = useState("");
   const [tripNotes, setTripNotes] = useState("");
   const [participantCount, setParticipantCount] = useState<string>("4");
 
-  const [homeCurrency, setHomeCurrency] = useState<CurrencyCode>("GBP");
-  const [tripCurrency, setTripCurrency] = useState<CurrencyCode>("JPY");
+  const [homeCurrency, setHomeCurrency] =
+    useState<CurrencyCode>(DEFAULT_HOME_CURRENCY);
+  const [tripCurrency, setTripCurrency] =
+    useState<CurrencyCode>(DEFAULT_TRIP_CURRENCY);
   const [extraCurrencies, setExtraCurrencies] = useState<
     Partial<Record<CurrencyCode, boolean>>
-  >({ EUR: false, USD: false });
+  >({});
 
   const [entityCount, setEntityCount] = useState(2);
   const [entityDrafts, setEntityDrafts] = useState<
-    Array<{ name: string; kind: EntityKind }>
+    Array<{ name: string; kind: EntityKind; colorIndex: number }>
   >([
-    { name: "Hunters", kind: "couple" },
-    { name: "Barrigaults", kind: "couple" },
+    { name: "Hunters", kind: "couple", colorIndex: 0 },
+    { name: "Barrigaults", kind: "couple", colorIndex: 1 },
   ]);
 
   const supportedCurrencies = useMemo((): CurrencyCode[] => {
     const set = new Set<CurrencyCode>([homeCurrency, tripCurrency]);
-    for (const c of ALL_CURRENCIES) {
+    for (const { code: c } of CURRENCY_OPTIONS) {
       if (extraCurrencies[c]) set.add(c);
     }
     return Array.from(set);
   }, [extraCurrencies, homeCurrency, tripCurrency]);
 
+  const alsoUseCurrencies = useMemo(
+    () =>
+      CURRENCY_OPTIONS.filter(
+        (c) => c.code !== homeCurrency && c.code !== tripCurrency
+      ),
+    [homeCurrency, tripCurrency]
+  );
+
   function syncEntityRows(n: number) {
     setEntityDrafts((prev) => {
       const next = [...prev];
       while (next.length < n) {
-        next.push({ name: `Group ${next.length + 1}`, kind: "couple" });
+        next.push({
+          name: `Group ${next.length + 1}`,
+          kind: "couple",
+          colorIndex: next.length % ENTITY_PALETTE.length,
+        });
       }
       while (next.length > n) next.pop();
       return next;
@@ -51,7 +69,7 @@ export function CreateTrip() {
 
   function updateEntityRow(
     i: number,
-    patch: Partial<{ name: string; kind: EntityKind }>
+    patch: Partial<{ name: string; kind: EntityKind; colorIndex: number }>
   ) {
     setEntityDrafts((rows) => {
       const next = [...rows];
@@ -71,7 +89,7 @@ export function CreateTrip() {
         id: newId(),
         name: d.name.trim(),
         kind: d.kind,
-        colorIndex: i % 6,
+        colorIndex: d.colorIndex % ENTITY_PALETTE.length,
       }));
       const trip: Trip = {
         id: newId(),
@@ -119,6 +137,10 @@ export function CreateTrip() {
               onChange={(e) => setTripName(e.target.value)}
               placeholder="e.g. Tokyo & Kyoto 2026"
             />
+            <p className="sub" style={{ margin: "6px 0 0" }}>
+              Use a clear name you can recognize later, such as destination plus
+              month/year.
+            </p>
           </div>
           <div className="field">
             <label>Notes (optional)</label>
@@ -166,9 +188,9 @@ export function CreateTrip() {
               value={homeCurrency}
               onChange={(e) => setHomeCurrency(e.target.value as CurrencyCode)}
             >
-              {ALL_CURRENCIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
+              {CURRENCY_OPTIONS.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.label}
                 </option>
               ))}
             </select>
@@ -179,9 +201,9 @@ export function CreateTrip() {
               value={tripCurrency}
               onChange={(e) => setTripCurrency(e.target.value as CurrencyCode)}
             >
-              {ALL_CURRENCIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
+              {CURRENCY_OPTIONS.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.label}
                 </option>
               ))}
             </select>
@@ -189,16 +211,19 @@ export function CreateTrip() {
           <div className="field">
             <label>Also use</label>
             <div className="stack" style={{ gap: 8 }}>
-              {(["EUR", "USD"] as const).map((c) => (
-                <label key={c} className="row" style={{ gap: 10 }}>
+              {alsoUseCurrencies.map((c) => (
+                <label key={c.code} className="row" style={{ gap: 10 }}>
                   <input
                     type="checkbox"
-                    checked={Boolean(extraCurrencies[c])}
+                    checked={Boolean(extraCurrencies[c.code])}
                     onChange={(e) =>
-                      setExtraCurrencies((x) => ({ ...x, [c]: e.target.checked }))
+                      setExtraCurrencies((x) => ({
+                        ...x,
+                        [c.code]: e.target.checked,
+                      }))
                     }
                   />
-                  <span>{c}</span>
+                  <span>{c.label}</span>
                 </label>
               ))}
             </div>
@@ -265,6 +290,38 @@ export function CreateTrip() {
                   <option value="couple">Couple / household</option>
                   <option value="individual">Individual</option>
                 </select>
+              </div>
+              <div className="field">
+                <label>Colour</label>
+                <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+                  {ENTITY_PALETTE.map((c, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      aria-label={`Select colour ${idx + 1}`}
+                      className={row.colorIndex === idx ? "btn" : "btn btn-ghost"}
+                      style={{
+                        minWidth: 40,
+                        padding: "8px 10px",
+                        borderColor: c.border,
+                        background: row.colorIndex === idx ? c.bg : undefined,
+                        color: c.text,
+                      }}
+                      onClick={() => updateEntityRow(i, { colorIndex: idx })}
+                    >
+                      <span
+                        aria-hidden
+                        style={{
+                          display: "inline-block",
+                          width: 12,
+                          height: 12,
+                          borderRadius: 999,
+                          background: c.chip,
+                        }}
+                      />
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           ))}

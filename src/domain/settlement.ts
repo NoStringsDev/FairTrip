@@ -181,5 +181,5 @@ export function buildEffectiveGbp(
 
 export function expenseDisplayOriginal(e: Expense): string {
   const div = minorUnitsFor(e.currencyCode);
-  return (e.amountMinorUnits / div).toFixed(e.currencyCode === "JPY" ? 0 : 2);
+  return (e.amountMinorUnits / div).toFixed(div === 1 ? 0 : 2);
 }

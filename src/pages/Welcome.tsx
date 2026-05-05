@@ -44,7 +44,8 @@ export function Welcome() {
       <div>
         <h1 className="title">FairTrip</h1>
         <p className="sub">
-          Built for phones: log GBP, JPY, EUR, or USD, optional receipt scan, and
+          Built for phones: log expenses in major global currencies, optional
+          receipt scan, and
           settle everything back to GBP. Works offline; syncs when you are online.
         </p>
       </div>

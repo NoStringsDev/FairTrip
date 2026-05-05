@@ -1,6 +1,7 @@
 /**
  * Optional Cloudflare Worker sync. If VITE_API_URL is unset, only local IndexedDB is used.
  */
+import type { QuoteCurrency } from "../types";
 
 const API = (import.meta.env.VITE_API_URL as string | undefined) || "";
 
@@ -47,7 +48,7 @@ export async function uploadReceipt(
 
 export async function fetchFxFromServer(
   isoDate: string,
-  currency: "JPY" | "EUR" | "USD"
+  currency: QuoteCurrency
 ): Promise<{
   gbpPerUnit: number;
   rateDate: string;

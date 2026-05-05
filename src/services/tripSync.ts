@@ -6,8 +6,29 @@ import { pullTrip, pushTripAndExpenses, syncEnabled } from "./sync";
 import { normalizeTrip } from "../lib/tripNormalize";
 import { normalizeExpense } from "../lib/expenseNormalize";
 
+const inFlightByTrip = new Map<string, Promise<void>>();
+
+async function withTripSyncLock(
+  tripId: string,
+  work: () => Promise<void>
+): Promise<void> {
+  const prev = inFlightByTrip.get(tripId) ?? Promise.resolve();
+  const next = prev.catch(() => undefined).then(work);
+  inFlightByTrip.set(tripId, next);
+  try {
+    await next;
+  } finally {
+    if (inFlightByTrip.get(tripId) === next) {
+      inFlightByTrip.delete(tripId);
+    }
+  }
+}
+
 export async function pushLocalTrip(tripId: string): Promise<void> {
   if (!syncEnabled()) return;
+  const beforeMerge = await db.trips.get(tripId);
+  if (!beforeMerge) return;
+  await pullAndMergeTrip(beforeMerge.tripCode);
   const raw = await db.trips.get(tripId);
   if (!raw) return;
   const trip = normalizeTrip(raw);
@@ -29,7 +50,7 @@ export async function pullAndMergeTrip(tripCode: string): Promise<boolean> {
 
 export async function schedulePush(tripId: string): Promise<void> {
   try {
-    await pushLocalTrip(tripId);
+    await withTripSyncLock(tripId, () => pushLocalTrip(tripId));
   } catch {
     await db.syncQueue.add({
       id: `${tripId}-${Date.now()}`,
@@ -44,7 +65,7 @@ export async function flushSyncQueue(): Promise<void> {
   const items = await db.syncQueue.orderBy("createdAt").toArray();
   for (const q of items) {
     try {
-      await pushLocalTrip(q.payload);
+      await withTripSyncLock(q.payload, () => pushLocalTrip(q.payload));
       await db.syncQueue.delete(q.id);
     } catch {
       break;

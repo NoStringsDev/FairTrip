@@ -88,6 +88,15 @@ export function Balance() {
     void schedulePush(trip.id);
   }
 
+  async function reopenTrip() {
+    if (!confirm("Reopen trip and allow new expenses again?")) return;
+    await db.trips.update(trip.id, {
+      closedAt: undefined,
+      updatedAt: Date.now(),
+    });
+    void schedulePush(trip.id);
+  }
+
   async function copyExport() {
     await navigator.clipboard.writeText(exportText);
     alert("Copied summary to clipboard");
@@ -157,7 +166,16 @@ export function Balance() {
               Close trip
             </button>
           ) : (
-            <span className="badge-fx">Trip closed</span>
+            <>
+              <span className="badge-fx">Trip closed</span>
+              <button
+                className="btn btn-ghost"
+                type="button"
+                onClick={() => void reopenTrip()}
+              >
+                Reopen trip
+              </button>
+            </>
           )}
         </div>
       </div>

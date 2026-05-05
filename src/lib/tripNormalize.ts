@@ -1,4 +1,5 @@
 import type { CurrencyCode, Trip, TripEntity } from "../types";
+import { DEFAULT_TRIP_CURRENCY } from "../domain/currencies";
 
 export const LEGACY_HUNTERS_ID = "legacy-hunters";
 export const LEGACY_BARRIGAULTS_ID = "legacy-barrigaults";
@@ -26,13 +27,13 @@ export function normalizeTrip(trip: Trip): Trip {
   const supported: CurrencyCode[] =
     trip.supportedCurrencies && trip.supportedCurrencies.length > 0
       ? trip.supportedCurrencies
-      : [trip.homeCurrency ?? "GBP", trip.tripCurrency ?? "JPY"];
+      : [trip.homeCurrency ?? "GBP", trip.tripCurrency ?? DEFAULT_TRIP_CURRENCY];
   return {
     ...trip,
     entities,
     supportedCurrencies: supported,
     homeCurrency: trip.homeCurrency ?? "GBP",
-    tripCurrency: trip.tripCurrency ?? "JPY",
+    tripCurrency: trip.tripCurrency ?? DEFAULT_TRIP_CURRENCY,
     settlementCurrency: trip.settlementCurrency ?? "GBP",
   };
 }

@@ -1,7 +1,9 @@
 import type { CurrencyCode } from "../types";
 
+const ZERO_DECIMAL_CURRENCIES = new Set<CurrencyCode>(["JPY", "KRW"]);
+
 export function minorUnitsFor(currency: CurrencyCode): number {
-  return currency === "JPY" ? 1 : 100;
+  return ZERO_DECIMAL_CURRENCIES.has(currency) ? 1 : 100;
 }
 
 export function parseAmountToMinor(
@@ -26,6 +28,6 @@ export function formatMinor(
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
-    maximumFractionDigits: currency === "JPY" ? 0 : 2,
+    maximumFractionDigits: ZERO_DECIMAL_CURRENCIES.has(currency) ? 0 : 2,
   }).format(amount);
 }
