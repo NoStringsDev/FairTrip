@@ -390,7 +390,7 @@ export function CreateTrip() {
         </div>
       ) : null}
 
-      <button type="button" className="btn btn-ghost" onClick={() => nav("/")}>
+      <button type="button" className="btn btn-ghost" onClick={() => nav("/welcome")}>
         Cancel
       </button>
     </div>

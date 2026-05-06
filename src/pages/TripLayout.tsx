@@ -7,6 +7,7 @@ import { MobileTripNav } from "../components/MobileTripNav";
 import { syncEnabled } from "../services/sync";
 import { flushSyncQueue } from "../services/tripSync";
 import { normalizeTrip } from "../lib/tripNormalize";
+import { setLastTripId } from "../lib/lastTrip";
 
 export function TripLayout() {
   const { tripId } = useParams();
@@ -22,7 +23,7 @@ export function TripLayout() {
     async function load() {
       const t = await db.trips.get(tripId);
       if (!alive) return;
-      if (!t) nav("/");
+      if (!t) nav("/welcome");
       else setTrip(normalizeTrip(t));
     }
     void load();
@@ -32,6 +33,11 @@ export function TripLayout() {
       window.clearInterval(id);
     };
   }, [tripId, nav]);
+
+  useEffect(() => {
+    if (!trip?.id) return;
+    setLastTripId(trip.id);
+  }, [trip?.id]);
 
   useEffect(() => {
     const onOnline = () => {
@@ -56,6 +62,30 @@ export function TripLayout() {
       ? "Online (live sync)"
       : "Online (local-only)";
 
+  async function shareTrip() {
+    const shareUrl = new URL("/", window.location.origin);
+    shareUrl.searchParams.set("tripCode", trip.tripCode);
+    const text = `Join my FairTrip: ${trip.name}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `FairTrip: ${trip.name}`,
+          text,
+          url: shareUrl.toString(),
+        });
+        return;
+      }
+    } catch {
+      // User cancelled or share failed: fallback to clipboard below.
+    }
+    try {
+      await navigator.clipboard.writeText(shareUrl.toString());
+      alert("Trip link copied to clipboard");
+    } catch {
+      alert(`Share this link: ${shareUrl.toString()}`);
+    }
+  }
+
   return (
     <div className="trip-app">
       <div className="app-shell trip-app__inner">
@@ -70,8 +100,14 @@ export function TripLayout() {
           </div>
           <div className="stack" style={{ gap: 6, alignItems: "flex-end" }}>
             <span className="badge-fx">{syncLabel}</span>
+            <button className="btn btn-ghost" type="button" onClick={() => void shareTrip()}>
+              Share trip
+            </button>
             <Link className="btn btn-ghost" to={`/trip/${tripId}/edit`}>
               Edit trip
+            </Link>
+            <Link className="btn btn-ghost" to="/welcome">
+              Switch trip
             </Link>
           </div>
         </div>

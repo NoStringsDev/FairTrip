@@ -7,12 +7,14 @@ import { Balance } from "./pages/Balance";
 import { History } from "./pages/History";
 import { EditExpense } from "./pages/EditExpense";
 import { EditTrip } from "./pages/EditTrip";
+import { HomeGate } from "./pages/HomeGate";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Welcome />} />
+        <Route path="/" element={<HomeGate />} />
+        <Route path="/welcome" element={<Welcome />} />
         <Route path="/create" element={<CreateTrip />} />
         <Route path="/trip/:tripId" element={<TripLayout />}>
           <Route index element={<Navigate to="balance" replace />} />

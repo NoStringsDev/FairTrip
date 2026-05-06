@@ -1,42 +1,93 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { db } from "../db/database";
-import { pullAndMergeTrip } from "../services/tripSync";
+import { clearLastTripId, getLastTripId, setLastTripId } from "../lib/lastTrip";
+import { resolveTripByCode } from "../services/tripAccess";
+import { normalizeTrip } from "../lib/tripNormalize";
 
 export function Welcome() {
   const nav = useNavigate();
+  const [search] = useSearchParams();
   const [joinCode, setJoinCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [lastTripName, setLastTripName] = useState<string | null>(null);
+  const autoJoinAttempted = useRef(false);
+
+  async function attemptJoin(codeInput: string): Promise<boolean> {
+    const code = codeInput.trim().toUpperCase();
+    if (!code) {
+      setErr("Enter trip code");
+      return false;
+    }
+    try {
+      const trip = await resolveTripByCode(code);
+      if (trip) {
+        setLastTripId(trip.id);
+        nav(`/trip/${trip.id}/balance`);
+        return true;
+      }
+      setErr("Trip not found (check code or sync API)");
+      return false;
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed");
+      return false;
+    }
+  }
 
   async function joinTrip() {
     setBusy(true);
     setErr(null);
     try {
-      const code = joinCode.trim().toUpperCase();
-      if (!code) {
-        setErr("Enter trip code");
-        return;
-      }
-      const merged = await pullAndMergeTrip(code);
-      if (merged) {
-        const t = await db.trips.where("tripCode").equals(code).first();
-        if (t) {
-          nav(`/trip/${t.id}/balance`);
-          return;
-        }
-      }
-      const local = await db.trips.where("tripCode").equals(code).first();
-      if (local) {
-        nav(`/trip/${local.id}/balance`);
-        return;
-      }
-      setErr("Trip not found (check code or sync API)");
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Failed");
+      await attemptJoin(joinCode);
     } finally {
       setBusy(false);
     }
+  }
+
+  useEffect(() => {
+    let alive = true;
+    async function loadLastTrip() {
+      const lastTripId = getLastTripId();
+      if (!lastTripId) {
+        if (alive) setLastTripName(null);
+        return;
+      }
+      const trip = await db.trips.get(lastTripId);
+      if (!trip) {
+        clearLastTripId();
+        if (alive) setLastTripName(null);
+        return;
+      }
+      if (alive) setLastTripName(normalizeTrip(trip).name);
+    }
+    void loadLastTrip();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (autoJoinAttempted.current) return;
+    const code = search.get("tripCode")?.trim().toUpperCase();
+    if (!code) return;
+    autoJoinAttempted.current = true;
+    setJoinCode(code);
+    setBusy(true);
+    setErr(search.get("joinError") ? "Shared link failed. Try again below." : null);
+    void attemptJoin(code).finally(() => setBusy(false));
+  }, [search]);
+
+  async function goToLastTrip() {
+    const lastTripId = getLastTripId();
+    if (!lastTripId) return;
+    const trip = await db.trips.get(lastTripId);
+    if (!trip) {
+      clearLastTripId();
+      setLastTripName(null);
+      return;
+    }
+    nav(`/trip/${trip.id}/balance`);
   }
 
   return (
@@ -49,6 +100,22 @@ export function Welcome() {
           settle everything back to GBP. Works offline; syncs when you are online.
         </p>
       </div>
+
+      {lastTripName ? (
+        <div className="card stack">
+          <button
+            className="btn btn-secondary btn-lg"
+            type="button"
+            disabled={busy}
+            onClick={() => void goToLastTrip()}
+          >
+            Return to {lastTripName}
+          </button>
+          <p className="sub" style={{ margin: 0 }}>
+            Quick way back if you accidentally left your active trip.
+          </p>
+        </div>
+      ) : null}
 
       <div className="card stack">
         <button

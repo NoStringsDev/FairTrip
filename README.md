@@ -4,6 +4,10 @@
 
 New trips walk you through name & notes, headcount (optional), currencies, and 2–6 balance groups. **Add expense** is a large floating action on Balance and History; receipts support **camera** or **photo library**.
 
+## Cursor Cloud Agents
+
+To use [Cursor Cloud Agents](https://cursor.com/docs/cloud-agent) on this repo (GitHub integration, onboarding, secrets, first PR smoke test), follow **[docs/CLOUD_AGENTS_SETUP.md](docs/CLOUD_AGENTS_SETUP.md)**.
+
 ## Repository
 
 Remote: **https://github.com/NoStringsDev/FairTrip**
