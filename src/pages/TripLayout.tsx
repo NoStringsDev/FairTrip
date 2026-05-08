@@ -5,7 +5,7 @@ import { db } from "../db/database";
 import type { Trip } from "../types";
 import { FloatingAddButton } from "../components/FloatingAddButton";
 import { MobileTripNav } from "../components/MobileTripNav";
-import { flushSyncQueue } from "../services/tripSync";
+import { flushSyncQueue, schedulePush } from "../services/tripSync";
 import { normalizeTrip } from "../lib/tripNormalize";
 import { setLastTripId } from "../lib/lastTrip";
 
@@ -97,6 +97,8 @@ export function TripLayout() {
     location.pathname.endsWith("/add") || location.pathname.endsWith("/edit");
 
   async function shareTrip() {
+    // Try to push latest local state before sharing a code/link for remote join.
+    await schedulePush(trip.id);
     const shareUrl = new URL("/", window.location.origin);
     shareUrl.searchParams.set("tripCode", trip.tripCode);
     const text = `Join my FairTrip: ${trip.name}`;

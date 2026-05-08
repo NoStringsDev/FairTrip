@@ -138,7 +138,8 @@ export function CreateTrip() {
         trip.participantCount = undefined;
       }
       await db.trips.put(trip);
-      void schedulePush(trip.id);
+      // Ensure the first sync attempt runs before exposing the trip code on next screen.
+      await schedulePush(trip.id);
       nav(`/trip/${trip.id}/balance`);
     } finally {
       setBusy(false);
