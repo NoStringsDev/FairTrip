@@ -1,12 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 88" fill="none">
   <rect x="0.5" y="0.5" width="319" height="87" rx="16" fill="#fff" stroke="#e2e8f0"/>
-  <path d="M201 22H226V33H214V45H247V56" stroke="#f472b6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="201" cy="22" r="3.2" fill="#3b82f6"/>
-  <circle cx="226" cy="33" r="3.2" fill="#3b82f6"/>
-  <circle cx="247" cy="56" r="3.2" fill="#3b82f6"/>
+  <path d="M213 22H246M213 31H236M213 40H242" stroke="#f472b6" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="213" cy="22" r="3.2" fill="#3b82f6"/>
+  <circle cx="242" cy="40" r="3.2" fill="#3b82f6"/>
   <g fill="#0f172a" font-family="DM Sans, system-ui, sans-serif" font-weight="700" letter-spacing="-0.8">
-    <text x="26" y="44" font-size="44">Fair</text>
-    <text x="74" y="70" font-size="44">Trip</text>
+    <text x="26" y="40" font-size="40">Fair</text>
+    <text x="116" y="74" font-size="40">Trip</text>
   </g>
-  <rect x="20" y="49" width="150" height="4" rx="2" fill="#f472b6"/>
 </svg>
