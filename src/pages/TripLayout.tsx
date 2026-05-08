@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { liveQuery } from "dexie";
 import { Link, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 import { db } from "../db/database";
 import type { Trip } from "../types";
@@ -19,33 +20,29 @@ export function TripLayout() {
 
   useEffect(() => {
     if (!tripId) return;
-    let alive = true;
-    async function load() {
-      setTripLookupState("loading");
-      const t = await db.trips.get(tripId);
-      if (!alive) return;
+    setTripLookupState("loading");
+    const subscription = liveQuery(() => db.trips.get(tripId)).subscribe((t) => {
       if (!t) {
         setTrip(null);
         setTripLookupState("missing");
-      } else {
-        const normalized = normalizeTrip(t);
-        setTrip((prev) => {
-          if (
-            prev &&
-            prev.id === normalized.id &&
-            prev.updatedAt === normalized.updatedAt &&
-            prev.closedAt === normalized.closedAt
-          ) {
-            return prev;
-          }
-          return normalized;
-        });
-        setTripLookupState("ready");
+        return;
       }
-    }
-    void load();
+      const normalized = normalizeTrip(t);
+      setTrip((prev) => {
+        if (
+          prev &&
+          prev.id === normalized.id &&
+          prev.updatedAt === normalized.updatedAt &&
+          prev.closedAt === normalized.closedAt
+        ) {
+          return prev;
+        }
+        return normalized;
+      });
+      setTripLookupState("ready");
+    });
     return () => {
-      alive = false;
+      subscription.unsubscribe();
     };
   }, [tripId]);
 

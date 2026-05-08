@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { liveQuery } from "dexie";
 import { useMatch } from "react-router-dom";
 import inlineBreakWordmark from "../assets/branding/designed-inline-break-wordmark.svg";
 import { db } from "../db/database";
@@ -19,8 +20,7 @@ export function AppBrandHeader() {
       setTrip(null);
       return;
     }
-    async function load() {
-      const row = await db.trips.get(tripId);
+    const subscription = liveQuery(() => db.trips.get(tripId)).subscribe((row) => {
       const next = row ? normalizeTrip(row) : null;
       setTrip((prev) => {
         if (
@@ -34,8 +34,10 @@ export function AppBrandHeader() {
         }
         return next;
       });
-    }
-    void load();
+    });
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [tripId]);
 
   useEffect(() => {

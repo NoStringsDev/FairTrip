@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { liveQuery } from "dexie";
 import { useOutletContext } from "react-router-dom";
 import { db } from "../db/database";
 import type { Expense, Trip } from "../types";
@@ -10,7 +11,6 @@ import { schedulePush } from "../services/tripSync";
 import { normalizeTrip } from "../lib/tripNormalize";
 
 type Ctx = { trip: Trip };
-const EXPENSES_UPDATED_EVENT = "fairtrip:expenses-updated";
 
 function sameExpenseRows(a: Expense[], b: Expense[]): boolean {
   if (a.length !== b.length) return false;
@@ -34,26 +34,17 @@ export function Balance() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
 
   useEffect(() => {
-    let alive = true;
-    async function load() {
+    const subscription = liveQuery(async () => {
       const rows = await db.expenses
         .where("tripId")
         .equals(trip.id)
         .sortBy("expenseTimestamp");
-      if (!alive) return;
-      const next = rows.reverse();
+      return rows.reverse();
+    }).subscribe((next) => {
       setExpenses((prev) => (sameExpenseRows(prev, next) ? prev : next));
-    }
-    function onExpensesUpdated(e: Event) {
-      const detail = (e as CustomEvent<{ tripId?: string }>).detail;
-      if (detail?.tripId && detail.tripId !== trip.id) return;
-      void load();
-    }
-    void load();
-    window.addEventListener(EXPENSES_UPDATED_EVENT, onExpensesUpdated as EventListener);
+    });
     return () => {
-      alive = false;
-      window.removeEventListener(EXPENSES_UPDATED_EVENT, onExpensesUpdated as EventListener);
+      subscription.unsubscribe();
     };
   }, [trip.id]);
 
