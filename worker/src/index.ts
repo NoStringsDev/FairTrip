@@ -142,6 +142,7 @@ export default {
           }>;
         };
         const t = body.trip;
+        const normalizedTripCode = String(t.tripCode ?? "").trim().toUpperCase();
         const entitiesJson = t.entities ? JSON.stringify(t.entities) : null;
         const supportedJson = t.supportedCurrencies
           ? JSON.stringify(t.supportedCurrencies)
@@ -164,7 +165,7 @@ export default {
             t.homeCurrency,
             t.tripCurrency,
             t.settlementCurrency,
-            t.tripCode,
+            normalizedTripCode,
             t.createdAt,
             t.closedAt ?? null,
             t.updatedAt,
@@ -238,10 +239,10 @@ export default {
       }
 
       if (url.pathname === "/api/sync/pull" && request.method === "GET") {
-        const tripCode = url.searchParams.get("tripCode");
+        const tripCode = url.searchParams.get("tripCode")?.trim().toUpperCase();
         if (!tripCode) return json({ error: "tripCode" }, env, origin, 400);
         const trip = await env.DB.prepare(
-          `SELECT * FROM trips WHERE trip_code = ?`
+          `SELECT * FROM trips WHERE UPPER(TRIM(trip_code)) = ?`
         )
           .bind(tripCode)
           .first();
@@ -256,14 +257,14 @@ export default {
 
       if (url.pathname === "/api/receipts" && request.method === "POST") {
         const form = await request.formData();
-        const tripCode = String(form.get("tripCode") ?? "");
+        const tripCode = String(form.get("tripCode") ?? "").trim().toUpperCase();
         const expenseId = String(form.get("expenseId") ?? "");
         const file = form.get("file");
         if (!tripCode || !expenseId || !(file instanceof File)) {
           return json({ error: "invalid form" }, env, origin, 400);
         }
         const trip = await env.DB.prepare(
-          `SELECT id FROM trips WHERE trip_code = ?`
+          `SELECT id FROM trips WHERE UPPER(TRIM(trip_code)) = ?`
         )
           .bind(tripCode)
           .first<{ id: string }>();
