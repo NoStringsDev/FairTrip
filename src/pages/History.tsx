@@ -11,6 +11,22 @@ import { splitSummary } from "../lib/expenseLabels";
 
 type Ctx = { trip: Trip };
 
+function sameExpenseRows(a: Expense[], b: Expense[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    const left = a[i];
+    const right = b[i];
+    if (
+      left.id !== right.id ||
+      left.updatedAt !== right.updatedAt ||
+      left.deletedAt !== right.deletedAt
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export function History() {
   const { trip: rawTrip } = useOutletContext<Ctx>();
   const trip = normalizeTrip(rawTrip);
@@ -22,11 +38,12 @@ export function History() {
     let alive = true;
     async function load() {
       const rows = await db.expenses.where("tripId").equals(trip.id).toArray();
-      if (alive)
-        setExpenses(rows.sort((a, b) => b.expenseTimestamp - a.expenseTimestamp));
+      if (!alive) return;
+      const next = rows.sort((a, b) => b.expenseTimestamp - a.expenseTimestamp);
+      setExpenses((prev) => (sameExpenseRows(prev, next) ? prev : next));
     }
     void load();
-    const id = window.setInterval(() => void load(), 1500);
+    const id = window.setInterval(() => void load(), 10000);
     return () => {
       alive = false;
       window.clearInterval(id);

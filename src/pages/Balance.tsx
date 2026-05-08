@@ -11,6 +11,22 @@ import { normalizeTrip } from "../lib/tripNormalize";
 
 type Ctx = { trip: Trip };
 
+function sameExpenseRows(a: Expense[], b: Expense[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    const left = a[i];
+    const right = b[i];
+    if (
+      left.id !== right.id ||
+      left.updatedAt !== right.updatedAt ||
+      left.deletedAt !== right.deletedAt
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export function Balance() {
   const { trip: rawTrip } = useOutletContext<Ctx>();
   const trip = normalizeTrip(rawTrip);
@@ -23,10 +39,12 @@ export function Balance() {
         .where("tripId")
         .equals(trip.id)
         .sortBy("expenseTimestamp");
-      if (alive) setExpenses(rows.reverse());
+      if (!alive) return;
+      const next = rows.reverse();
+      setExpenses((prev) => (sameExpenseRows(prev, next) ? prev : next));
     }
     void load();
-    const id = window.setInterval(() => void load(), 1200);
+    const id = window.setInterval(() => void load(), 10000);
     return () => {
       alive = false;
       window.clearInterval(id);

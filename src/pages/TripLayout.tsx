@@ -44,7 +44,7 @@ export function TripLayout() {
       }
     }
     void load(true);
-    const id = window.setInterval(() => void load(false), 1500);
+    const id = window.setInterval(() => void load(false), 10000);
     return () => {
       alive = false;
       window.clearInterval(id);

@@ -23,10 +23,22 @@ export function AppBrandHeader() {
     async function load() {
       const row = await db.trips.get(tripId);
       if (!alive) return;
-      setTrip(row ? normalizeTrip(row) : null);
+      const next = row ? normalizeTrip(row) : null;
+      setTrip((prev) => {
+        if (
+          prev &&
+          next &&
+          prev.id === next.id &&
+          prev.updatedAt === next.updatedAt &&
+          prev.closedAt === next.closedAt
+        ) {
+          return prev;
+        }
+        return next;
+      });
     }
     void load();
-    const id = window.setInterval(() => void load(), 1500);
+    const id = window.setInterval(() => void load(), 10000);
     return () => {
       alive = false;
       window.clearInterval(id);
