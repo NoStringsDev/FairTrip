@@ -7,6 +7,15 @@ import { normalizeTrip } from "../lib/tripNormalize";
 import { syncEnabled } from "../services/sync";
 import type { Trip } from "../types";
 
+function sameHeaderTrip(a: Trip, b: Trip): boolean {
+  return (
+    a.id === b.id &&
+    a.name === b.name &&
+    a.tripCode === b.tripCode &&
+    a.closedAt === b.closedAt
+  );
+}
+
 export function AppBrandHeader() {
   const match = useMatch("/trip/:tripId/*");
   const tripId = match?.params.tripId;
@@ -23,13 +32,7 @@ export function AppBrandHeader() {
     const subscription = liveQuery(() => db.trips.get(tripId)).subscribe((row) => {
       const next = row ? normalizeTrip(row) : null;
       setTrip((prev) => {
-        if (
-          prev &&
-          next &&
-          prev.id === next.id &&
-          prev.updatedAt === next.updatedAt &&
-          prev.closedAt === next.closedAt
-        ) {
+        if (prev && next && sameHeaderTrip(prev, next)) {
           return prev;
         }
         return next;

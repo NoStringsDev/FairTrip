@@ -8,6 +8,7 @@ import { formatMinor } from "../domain/currency";
 import { EntityChip, EntityChipById } from "../components/EntityChip";
 import { schedulePush } from "../services/tripSync";
 import { normalizeTrip } from "../lib/tripNormalize";
+import { normalizeExpense } from "../lib/expenseNormalize";
 
 type Ctx = { trip: Trip };
 const EXPENSES_UPDATED_EVENT = "fairtrip:expenses-updated";
@@ -30,7 +31,7 @@ function sameExpenseRows(a: Expense[], b: Expense[]): boolean {
 
 export function Balance() {
   const { trip: rawTrip } = useOutletContext<Ctx>();
-  const trip = normalizeTrip(rawTrip);
+  const trip = useMemo(() => normalizeTrip(rawTrip), [rawTrip]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
 
   useEffect(() => {
@@ -73,7 +74,7 @@ export function Balance() {
       m.set(ex.payerEntityId, (m.get(ex.payerEntityId) ?? 0) + eff.gbpMinor);
     }
     return m;
-  }, [expenses, trip]);
+  }, [expenses, trip.entities]);
 
   const exportText = useMemo(() => {
     const lines: string[] = [];
@@ -99,7 +100,7 @@ export function Balance() {
       );
     }
     return lines.join("\n");
-  }, [paidByEntity, settlement, trip]);
+  }, [paidByEntity, settlement, trip.entities, trip.name, trip.tripCode]);
 
   async function closeTrip() {
     if (!confirm("Close trip? You can still view history.")) return;

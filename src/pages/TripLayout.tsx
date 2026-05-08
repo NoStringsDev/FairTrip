@@ -9,6 +9,19 @@ import { flushSyncQueue } from "../services/tripSync";
 import { normalizeTrip } from "../lib/tripNormalize";
 import { setLastTripId } from "../lib/lastTrip";
 
+function sameTripUiState(a: Trip, b: Trip): boolean {
+  return (
+    a.id === b.id &&
+    a.name === b.name &&
+    a.tripCode === b.tripCode &&
+    a.closedAt === b.closedAt &&
+    a.tripNotes === b.tripNotes &&
+    a.participantCount === b.participantCount &&
+    JSON.stringify(a.entities) === JSON.stringify(b.entities) &&
+    JSON.stringify(a.supportedCurrencies) === JSON.stringify(b.supportedCurrencies)
+  );
+}
+
 export function TripLayout() {
   const { tripId } = useParams();
   const location = useLocation();
@@ -29,12 +42,7 @@ export function TripLayout() {
       }
       const normalized = normalizeTrip(t);
       setTrip((prev) => {
-        if (
-          prev &&
-          prev.id === normalized.id &&
-          prev.updatedAt === normalized.updatedAt &&
-          prev.closedAt === normalized.closedAt
-        ) {
+        if (prev && sameTripUiState(prev, normalized)) {
           return prev;
         }
         return normalized;
