@@ -1,0 +1,16 @@
+name = "fair-trip-api"
+main = "worker/src/index.ts"
+compatibility_date = "2025-05-01"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "fair-trip-db"
+database_id = "b302b6db-9fcc-4bf7-a6e6-f6a31b05c036"
+
+[[r2_buckets]]
+binding = "RECEIPTS"
+bucket_name = "fairtrip-reciepts"
