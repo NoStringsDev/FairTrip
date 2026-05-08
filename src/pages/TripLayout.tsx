@@ -20,8 +20,8 @@ export function TripLayout() {
   useEffect(() => {
     if (!tripId) return;
     let alive = true;
-    async function load(showLoading: boolean) {
-      if (showLoading) setTripLookupState("loading");
+    async function load() {
+      setTripLookupState("loading");
       const t = await db.trips.get(tripId);
       if (!alive) return;
       if (!t) {
@@ -43,11 +43,9 @@ export function TripLayout() {
         setTripLookupState("ready");
       }
     }
-    void load(true);
-    const id = window.setInterval(() => void load(false), 10000);
+    void load();
     return () => {
       alive = false;
-      window.clearInterval(id);
     };
   }, [tripId]);
 

@@ -10,6 +10,7 @@ import { schedulePush } from "../services/tripSync";
 import { normalizeTrip } from "../lib/tripNormalize";
 
 type Ctx = { trip: Trip };
+const EXPENSES_UPDATED_EVENT = "fairtrip:expenses-updated";
 
 function sameExpenseRows(a: Expense[], b: Expense[]): boolean {
   if (a.length !== b.length) return false;
@@ -43,11 +44,16 @@ export function Balance() {
       const next = rows.reverse();
       setExpenses((prev) => (sameExpenseRows(prev, next) ? prev : next));
     }
+    function onExpensesUpdated(e: Event) {
+      const detail = (e as CustomEvent<{ tripId?: string }>).detail;
+      if (detail?.tripId && detail.tripId !== trip.id) return;
+      void load();
+    }
     void load();
-    const id = window.setInterval(() => void load(), 10000);
+    window.addEventListener(EXPENSES_UPDATED_EVENT, onExpensesUpdated as EventListener);
     return () => {
       alive = false;
-      window.clearInterval(id);
+      window.removeEventListener(EXPENSES_UPDATED_EVENT, onExpensesUpdated as EventListener);
     };
   }, [trip.id]);
 

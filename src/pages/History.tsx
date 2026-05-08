@@ -10,6 +10,7 @@ import { normalizeTrip } from "../lib/tripNormalize";
 import { splitSummary } from "../lib/expenseLabels";
 
 type Ctx = { trip: Trip };
+const EXPENSES_UPDATED_EVENT = "fairtrip:expenses-updated";
 
 function sameExpenseRows(a: Expense[], b: Expense[]): boolean {
   if (a.length !== b.length) return false;
@@ -40,10 +41,19 @@ export function History() {
       const rows = await db.expenses.where("tripId").equals(trip.id).toArray();
       if (!alive) return;
       const next = rows.sort((a, b) => b.expenseTimestamp - a.expenseTimestamp);
-      setExpenses((prev) => (sameExpenseRows(prev, next) ? prev : next));
+      let changed = false;
+      setExpenses((prev) => {
+        changed = !sameExpenseRows(prev, next);
+        return changed ? next : prev;
+      });
+      if (changed) {
+        window.dispatchEvent(
+          new CustomEvent(EXPENSES_UPDATED_EVENT, { detail: { tripId: trip.id } })
+        );
+      }
     }
     void load();
-    const id = window.setInterval(() => void load(), 10000);
+    const id = window.setInterval(() => void load(), 3000);
     return () => {
       alive = false;
       window.clearInterval(id);

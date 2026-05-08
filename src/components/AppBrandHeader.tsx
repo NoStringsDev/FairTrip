@@ -19,10 +19,8 @@ export function AppBrandHeader() {
       setTrip(null);
       return;
     }
-    let alive = true;
     async function load() {
       const row = await db.trips.get(tripId);
-      if (!alive) return;
       const next = row ? normalizeTrip(row) : null;
       setTrip((prev) => {
         if (
@@ -38,11 +36,6 @@ export function AppBrandHeader() {
       });
     }
     void load();
-    const id = window.setInterval(() => void load(), 10000);
-    return () => {
-      alive = false;
-      window.clearInterval(id);
-    };
   }, [tripId]);
 
   useEffect(() => {
