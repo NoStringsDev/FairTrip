@@ -42,7 +42,16 @@ export function History() {
       const rows = await db.expenses.where("tripId").equals(trip.id).toArray();
       return rows.sort((a, b) => b.expenseTimestamp - a.expenseTimestamp);
     }).subscribe((next) => {
-      setExpenses((prev) => (sameExpenseRows(prev, next) ? prev : next));
+      let changed = false;
+      setExpenses((prev) => {
+        changed = !sameExpenseRows(prev, next);
+        return changed ? next : prev;
+      });
+      if (changed) {
+        window.dispatchEvent(
+          new CustomEvent(EXPENSES_UPDATED_EVENT, { detail: { tripId: trip.id } })
+        );
+      }
     });
     return () => {
       subscription.unsubscribe();
