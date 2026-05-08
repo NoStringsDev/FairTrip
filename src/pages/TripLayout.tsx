@@ -60,6 +60,12 @@ export function TripLayout() {
   }, [trip?.id]);
 
   useEffect(() => {
+    if (!trip?.id) return;
+    // Backfill older local-only trips to remote as soon as they are opened.
+    void schedulePush(trip.id);
+  }, [trip?.id]);
+
+  useEffect(() => {
     const onOnline = () => {
       void flushSyncQueue();
     };
