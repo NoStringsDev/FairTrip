@@ -203,7 +203,7 @@ export function AddExpense() {
         </div>
 
         <div className="field">
-          <label>title</label>
+          <label>Title</label>
           <input value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
 
