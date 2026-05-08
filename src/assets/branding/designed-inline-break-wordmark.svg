@@ -1,7 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 88" fill="none">
-  <rect x="24" y="58" width="188" height="4" rx="2" fill="#f472b6"/>
+  <defs>
+    <mask id="wordmark-cutout">
+      <rect x="0" y="0" width="320" height="88" fill="white"/>
+      <text x="24" y="56" fill="black" font-family="DM Sans, system-ui, sans-serif" font-size="54" font-weight="700" letter-spacing="-1.1">
+        FairTrip
+      </text>
+    </mask>
+  </defs>
+  <rect x="24" y="46" width="188" height="4" rx="2" fill="#f472b6" mask="url(#wordmark-cutout)"/>
   <text x="24" y="56" fill="#0f172a" font-family="DM Sans, system-ui, sans-serif" font-size="54" font-weight="700" letter-spacing="-1.1">
     FairTrip
   </text>
-  <circle cx="212" cy="60" r="4.5" fill="#3b82f6"/>
+  <circle cx="212" cy="48" r="4.5" fill="#3b82f6"/>
 </svg>
