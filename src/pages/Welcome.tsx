@@ -4,6 +4,7 @@ import { db } from "../db/database";
 import { clearLastTripId, getLastTripId, setLastTripId } from "../lib/lastTrip";
 import { resolveTripByCode } from "../services/tripAccess";
 import { normalizeTrip } from "../lib/tripNormalize";
+import { BrandVariantPicker } from "../components/BrandVariantPicker";
 
 export function Welcome() {
   const nav = useNavigate();
@@ -93,13 +94,15 @@ export function Welcome() {
   return (
     <div className="app-shell stack">
       <div>
-        <h1 className="title">FairTrip</h1>
+        <h1 className="title">Split trip costs fairly</h1>
         <p className="sub">
           Built for phones: log expenses in major global currencies, optional
           receipt scan, and
           settle everything back to GBP. Works offline; syncs when you are online.
         </p>
       </div>
+
+      <BrandVariantPicker />
 
       {lastTripName ? (
         <div className="card stack">
