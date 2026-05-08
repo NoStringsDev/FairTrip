@@ -150,6 +150,11 @@ export function EditExpense() {
         </h2>
 
         <div className="field">
+          <label>title</label>
+          <input value={note} onChange={(e) => setNote(e.target.value)} />
+        </div>
+
+        <div className="field">
           <label>Amount</label>
           <input
             inputMode="decimal"
@@ -226,11 +231,6 @@ export function EditExpense() {
             value={when}
             onChange={(e) => setWhen(e.target.value)}
           />
-        </div>
-
-        <div className="field">
-          <label>Note / place</label>
-          <input value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
 
         <div className="field">
