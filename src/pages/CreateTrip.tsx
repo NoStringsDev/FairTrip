@@ -11,6 +11,9 @@ import {
 } from "../domain/currencies";
 import { ENTITY_PALETTE } from "../theme/entities";
 
+const MAX_EXTRA_CURRENCIES = 5;
+const MAX_ENTITY_ADDITIONS = 6;
+
 export function CreateTrip() {
   const nav = useNavigate();
   const [step, setStep] = useState(1);
@@ -24,48 +27,37 @@ export function CreateTrip() {
     useState<CurrencyCode>(DEFAULT_HOME_CURRENCY);
   const [tripCurrency, setTripCurrency] =
     useState<CurrencyCode>(DEFAULT_TRIP_CURRENCY);
-  const [extraCurrencies, setExtraCurrencies] = useState<
-    Partial<Record<CurrencyCode, boolean>>
-  >({});
+  const [additionalCurrencies, setAdditionalCurrencies] = useState<CurrencyCode[]>([]);
+  const [nextAdditionalCurrency, setNextAdditionalCurrency] = useState<CurrencyCode | "">("");
 
-  const [entityCount, setEntityCount] = useState(2);
   const [entityDrafts, setEntityDrafts] = useState<
     Array<{ name: string; kind: EntityKind; colorIndex: number }>
-  >([
-    { name: "Hunters", kind: "couple", colorIndex: 0 },
-    { name: "Barrigaults", kind: "couple", colorIndex: 1 },
-  ]);
+  >([{ name: "", kind: "couple", colorIndex: 0 }]);
 
-  const supportedCurrencies = useMemo((): CurrencyCode[] => {
-    const set = new Set<CurrencyCode>([homeCurrency, tripCurrency]);
-    for (const { code: c } of CURRENCY_OPTIONS) {
-      if (extraCurrencies[c]) set.add(c);
-    }
-    return Array.from(set);
-  }, [extraCurrencies, homeCurrency, tripCurrency]);
-
-  const alsoUseCurrencies = useMemo(
-    () =>
-      CURRENCY_OPTIONS.filter(
-        (c) => c.code !== homeCurrency && c.code !== tripCurrency
-      ),
-    [homeCurrency, tripCurrency]
+  const sanitizedAdditionalCurrencies = useMemo(
+    () => additionalCurrencies.filter((c) => c !== homeCurrency && c !== tripCurrency),
+    [additionalCurrencies, homeCurrency, tripCurrency]
   );
 
-  function syncEntityRows(n: number) {
-    setEntityDrafts((prev) => {
-      const next = [...prev];
-      while (next.length < n) {
-        next.push({
-          name: `Group ${next.length + 1}`,
-          kind: "couple",
-          colorIndex: next.length % ENTITY_PALETTE.length,
-        });
-      }
-      while (next.length > n) next.pop();
-      return next;
-    });
-  }
+  const supportedCurrencies = useMemo((): CurrencyCode[] => {
+    const set = new Set<CurrencyCode>([
+      homeCurrency,
+      tripCurrency,
+      ...sanitizedAdditionalCurrencies,
+    ]);
+    return Array.from(set);
+  }, [homeCurrency, sanitizedAdditionalCurrencies, tripCurrency]);
+
+  const availableAdditionalCurrencies = useMemo(
+    () =>
+      CURRENCY_OPTIONS.filter(
+        (c) =>
+          c.code !== homeCurrency &&
+          c.code !== tripCurrency &&
+          !sanitizedAdditionalCurrencies.includes(c.code)
+      ),
+    [homeCurrency, sanitizedAdditionalCurrencies, tripCurrency]
+  );
 
   function updateEntityRow(
     i: number,
@@ -78,18 +70,53 @@ export function CreateTrip() {
     });
   }
 
+  function addAdditionalCurrency() {
+    if (!nextAdditionalCurrency) return;
+    if (sanitizedAdditionalCurrencies.length >= MAX_EXTRA_CURRENCIES) return;
+    setAdditionalCurrencies((prev) =>
+      prev.includes(nextAdditionalCurrency) ? prev : [...prev, nextAdditionalCurrency]
+    );
+    setNextAdditionalCurrency("");
+  }
+
+  function removeAdditionalCurrency(code: CurrencyCode) {
+    setAdditionalCurrencies((prev) => prev.filter((c) => c !== code));
+  }
+
+  function addNameRow() {
+    setEntityDrafts((prev) => {
+      if (prev.length >= MAX_ENTITY_ADDITIONS + 1) return prev;
+      return [
+        ...prev,
+        {
+          name: "",
+          kind: "couple",
+          colorIndex: prev.length % ENTITY_PALETTE.length,
+        },
+      ];
+    });
+  }
+
+  function removeNameRow(index: number) {
+    setEntityDrafts((prev) => {
+      if (prev.length <= 1) return prev;
+      return prev.filter((_, i) => i !== index);
+    });
+  }
+
   const canNext1 = tripName.trim().length > 0;
   const canNext2 = supportedCurrencies.length > 0;
-  const canNext3 = entityDrafts.every((r) => r.name.trim().length > 0) && entityCount >= 2;
+  const canNext3 =
+    entityDrafts.length > 0 && entityDrafts.every((r) => r.name.trim().length > 0);
 
   async function finish() {
     setBusy(true);
     try {
-      const entities: TripEntity[] = entityDrafts.slice(0, entityCount).map((d, i) => ({
+      const entities: TripEntity[] = entityDrafts.map((draft) => ({
         id: newId(),
-        name: d.name.trim(),
-        kind: d.kind,
-        colorIndex: d.colorIndex % ENTITY_PALETTE.length,
+        name: draft.name.trim(),
+        kind: draft.kind,
+        colorIndex: draft.colorIndex % ENTITY_PALETTE.length,
       }));
       const trip: Trip = {
         id: newId(),
@@ -122,7 +149,9 @@ export function CreateTrip() {
     <div className="app-shell stack create-trip">
       <div>
         <h1 className="title">New trip</h1>
-        <p className="sub">Step {step} of 4 — set up who is travelling and how money is tracked.</p>
+        <p className="sub">
+          Step {step} of 4 — set up who is travelling and how money is tracked.
+        </p>
       </div>
 
       {step === 1 ? (
@@ -180,13 +209,20 @@ export function CreateTrip() {
             Currencies
           </h2>
           <p className="sub" style={{ marginTop: 0 }}>
-            Settlement is always in <strong>GBP</strong>. Pick which currencies you will log expenses in.
+            Settlement is always in <strong>GBP</strong>. Pick which currencies you will log
+            expenses in.
           </p>
           <div className="field">
             <label>Home / card currency</label>
             <select
               value={homeCurrency}
-              onChange={(e) => setHomeCurrency(e.target.value as CurrencyCode)}
+              onChange={(e) => {
+                const next = e.target.value as CurrencyCode;
+                setHomeCurrency(next);
+                setAdditionalCurrencies((prev) =>
+                  prev.filter((currency) => currency !== next && currency !== tripCurrency)
+                );
+              }}
             >
               {CURRENCY_OPTIONS.map((c) => (
                 <option key={c.code} value={c.code}>
@@ -199,7 +235,13 @@ export function CreateTrip() {
             <label>Main trip currency</label>
             <select
               value={tripCurrency}
-              onChange={(e) => setTripCurrency(e.target.value as CurrencyCode)}
+              onChange={(e) => {
+                const next = e.target.value as CurrencyCode;
+                setTripCurrency(next);
+                setAdditionalCurrencies((prev) =>
+                  prev.filter((currency) => currency !== homeCurrency && currency !== next)
+                );
+              }}
             >
               {CURRENCY_OPTIONS.map((c) => (
                 <option key={c.code} value={c.code}>
@@ -209,23 +251,51 @@ export function CreateTrip() {
             </select>
           </div>
           <div className="field">
-            <label>Also use</label>
-            <div className="stack" style={{ gap: 8 }}>
-              {alsoUseCurrencies.map((c) => (
-                <label key={c.code} className="row" style={{ gap: 10 }}>
-                  <input
-                    type="checkbox"
-                    checked={Boolean(extraCurrencies[c.code])}
-                    onChange={(e) =>
-                      setExtraCurrencies((x) => ({
-                        ...x,
-                        [c.code]: e.target.checked,
-                      }))
-                    }
-                  />
-                  <span>{c.label}</span>
-                </label>
-              ))}
+            <label>Add additional currency (up to 5)</label>
+            <div className="row" style={{ alignItems: "flex-end", gap: 8 }}>
+              <select
+                value={nextAdditionalCurrency}
+                onChange={(e) => setNextAdditionalCurrency(e.target.value as CurrencyCode | "")}
+                disabled={
+                  sanitizedAdditionalCurrencies.length >= MAX_EXTRA_CURRENCIES ||
+                  availableAdditionalCurrencies.length === 0
+                }
+              >
+                <option value="">Select currency</option>
+                {availableAdditionalCurrencies.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={addAdditionalCurrency}
+                disabled={
+                  !nextAdditionalCurrency ||
+                  sanitizedAdditionalCurrencies.length >= MAX_EXTRA_CURRENCIES
+                }
+              >
+                Add
+              </button>
+            </div>
+            <div className="stack" style={{ gap: 8, marginTop: 10 }}>
+              {sanitizedAdditionalCurrencies.map((code) => {
+                const option = CURRENCY_OPTIONS.find((item) => item.code === code);
+                return (
+                  <div key={code} className="row" style={{ justifyContent: "space-between" }}>
+                    <span>{option?.label ?? code}</span>
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={() => removeAdditionalCurrency(code)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
           <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
@@ -250,26 +320,9 @@ export function CreateTrip() {
             Who is splitting costs?
           </h2>
           <p className="sub" style={{ marginTop: 0 }}>
-            Add one row per <strong>couple</strong> or <strong>person</strong> that should have a running balance (2–6).
+            Start with one name, then add more (up to 7 total names).
           </p>
-          <div className="field">
-            <label>Number of balances</label>
-            <select
-              value={entityCount}
-              onChange={(e) => {
-                const n = Number(e.target.value);
-                setEntityCount(n);
-                syncEntityRows(n);
-              }}
-            >
-              {[2, 3, 4, 5, 6].map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-          </div>
-          {entityDrafts.slice(0, entityCount).map((row, i) => (
+          {entityDrafts.map((row, i) => (
             <div key={i} className="card stack" style={{ background: "#f8fafc" }}>
               <div className="field">
                 <label>Name {i + 1}</label>
@@ -323,8 +376,26 @@ export function CreateTrip() {
                   ))}
                 </div>
               </div>
+              <div className="row" style={{ justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => removeNameRow(i)}
+                  disabled={entityDrafts.length <= 1}
+                >
+                  Remove name
+                </button>
+              </div>
             </div>
           ))}
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={addNameRow}
+            disabled={entityDrafts.length >= MAX_ENTITY_ADDITIONS + 1}
+          >
+            Add name
+          </button>
           <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
             <button className="btn btn-secondary" type="button" onClick={() => setStep(2)}>
               Back
@@ -366,7 +437,7 @@ export function CreateTrip() {
             <li>
               <strong>Balances between</strong>
               <ul>
-                {entityDrafts.slice(0, entityCount).map((e, i) => (
+                {entityDrafts.map((e, i) => (
                   <li key={i}>
                     {e.name.trim()} ({e.kind === "couple" ? "couple" : "individual"})
                   </li>

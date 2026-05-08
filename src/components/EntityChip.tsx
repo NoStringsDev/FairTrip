@@ -24,7 +24,6 @@ export function EntityChip({
         color: c.text,
         padding: pad,
         fontSize: font,
-        maxWidth: "100%",
       }}
     >
       <span
@@ -38,15 +37,7 @@ export function EntityChip({
           flexShrink: 0,
         }}
       />
-      <span
-        style={{
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-        }}
-      >
-        {entity.name}
-      </span>
+      <span>{entity.name}</span>
     </span>
   );
 }

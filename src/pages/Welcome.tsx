@@ -93,12 +93,7 @@ export function Welcome() {
   return (
     <div className="app-shell stack">
       <div>
-        <h1 className="title">FairTrip</h1>
-        <p className="sub">
-          Built for phones: log expenses in major global currencies, optional
-          receipt scan, and
-          settle everything back to GBP. Works offline; syncs when you are online.
-        </p>
+        <h1 className="title">Split trip costs fairly</h1>
       </div>
 
       {lastTripName ? (

@@ -7,9 +7,7 @@ import { effectiveGbpFromExpense } from "../domain/effective";
 import { formatMinor } from "../domain/currency";
 import { EntityChip, EntityChipById } from "../components/EntityChip";
 import { schedulePush } from "../services/tripSync";
-import { normalizeExpense } from "../lib/expenseNormalize";
 import { normalizeTrip } from "../lib/tripNormalize";
-import { splitSummary } from "../lib/expenseLabels";
 
 type Ctx = { trip: Trip };
 
@@ -178,59 +176,6 @@ export function Balance() {
             </>
           )}
         </div>
-      </div>
-
-      <div className="card stack">
-        <h2 className="title" style={{ fontSize: "1rem" }}>
-          Recent items
-        </h2>
-        {expenses
-          .filter((e) => !e.deletedAt)
-          .slice(0, 12)
-          .map((e) => {
-            const eff = effectiveGbpFromExpense(e);
-            const ex = normalizeExpense(e, trip);
-            return (
-              <div
-                key={e.id}
-                className="row"
-                style={{
-                  justifyContent: "space-between",
-                  borderTop: "1px solid #f1f5f9",
-                  paddingTop: 10,
-                }}
-              >
-                <div className="stack" style={{ gap: 4 }}>
-                  <div className="row" style={{ gap: 6, flexWrap: "wrap" }}>
-                    <EntityChipById trip={trip} entityId={ex.payerEntityId} size="sm" />
-                    <span className="badge-fx">paid</span>
-                    <span className="badge-fx">→ {splitSummary(trip, e)}</span>
-                  </div>
-                  <div className="sub" style={{ fontSize: "0.8rem" }}>
-                    {e.note || "Expense"}{" "}
-                    <span className="badge-fx">
-                      {new Date(e.expenseTimestamp).toLocaleString("en-GB", {
-                        day: "2-digit",
-                        month: "short",
-                      })}
-                    </span>
-                  </div>
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontWeight: 800 }}>
-                    {formatMinor(e.amountMinorUnits, e.currencyCode)}
-                  </div>
-                  <div className="sub" style={{ fontSize: "0.75rem" }}>
-                    {eff ? (
-                      <>≈ {formatMinor(eff.gbpMinor, "GBP")}</>
-                    ) : (
-                      <span className="badge-fx">FX pending</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
       </div>
     </div>
   );

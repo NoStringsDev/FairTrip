@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 248 56" fill="none">
+  <rect x="0.5" y="0.5" width="247" height="55" rx="14" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="24" y="35" fill="#0f172a" font-family="DM Sans, system-ui, sans-serif" font-size="28" font-weight="700" letter-spacing="-0.4">
+    FairTrip
+  </text>
+  <path d="M163 32c9.5-1 13-5.2 18.2-10.5 4.9-5.1 8.6-8.8 16.7-9.8" stroke="#f472b6" stroke-width="2.3" stroke-linecap="round"/>
+  <path d="M163 14c9.5 1 13 5.2 18.2 10.5 4.9 5.1 8.6 8.8 16.7 9.8" stroke="#3b82f6" stroke-width="2.3" stroke-linecap="round"/>
+  <circle cx="163" cy="14" r="2.1" fill="#3b82f6"/>
+  <circle cx="163" cy="32" r="2.1" fill="#f472b6"/>
+  <circle cx="198" cy="11.8" r="2.1" fill="#3b82f6"/>
+  <circle cx="198" cy="34.2" r="2.1" fill="#f472b6"/>
+</svg>
