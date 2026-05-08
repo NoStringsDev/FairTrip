@@ -1,14 +1,14 @@
-import pocketIcon from "../assets/branding/pocket-trip-balance-icon.svg";
-import pocketWordmark from "../assets/branding/pocket-trip-balance-wordmark.svg";
-import splitIcon from "../assets/branding/split-and-share-route-icon.svg";
-import splitWordmark from "../assets/branding/split-and-share-route-wordmark.svg";
-import sunnyIcon from "../assets/branding/sunny-ledger-journey-icon.svg";
-import sunnyWordmark from "../assets/branding/sunny-ledger-journey-wordmark.svg";
+import inlineBreakIcon from "../assets/branding/designed-inline-break-icon.svg";
+import inlineBreakWordmark from "../assets/branding/designed-inline-break-wordmark.svg";
+import skewMotionIcon from "../assets/branding/designed-skew-motion-icon.svg";
+import skewMotionWordmark from "../assets/branding/designed-skew-motion-wordmark.svg";
+import stackedSplitIcon from "../assets/branding/designed-stacked-split-icon.svg";
+import stackedSplitWordmark from "../assets/branding/designed-stacked-split-wordmark.svg";
 
 export type BrandVariantId =
-  | "sunny-ledger-journey"
-  | "split-and-share-route"
-  | "pocket-trip-balance";
+  | "designed-stacked-split"
+  | "designed-inline-break"
+  | "designed-skew-motion";
 
 export type BrandVariant = {
   id: BrandVariantId;
@@ -22,29 +22,29 @@ export const BRAND_VARIANT_STORAGE_KEY = "fairtrip.brandVariant";
 
 export const BRAND_VARIANTS: BrandVariant[] = [
   {
-    id: "sunny-ledger-journey",
-    name: "Sunny Ledger Journey",
-    tone: "Cheerful checklist vibe with a playful route cue.",
-    iconSrc: sunnyIcon,
-    wordmarkSrc: sunnyWordmark,
+    id: "designed-stacked-split",
+    name: "Option 1: Stacked Split",
+    tone: "Stacked wordmark with a clean split band and route-like rows.",
+    iconSrc: stackedSplitIcon,
+    wordmarkSrc: stackedSplitWordmark,
   },
   {
-    id: "split-and-share-route",
-    name: "Split & Share Route",
-    tone: "Dynamic social split paths that meet in the middle.",
-    iconSrc: splitIcon,
-    wordmarkSrc: splitWordmark,
+    id: "designed-inline-break",
+    name: "Option 2: Inline Break",
+    tone: "Single-line wordmark with an intentional horizontal break.",
+    iconSrc: inlineBreakIcon,
+    wordmarkSrc: inlineBreakWordmark,
   },
   {
-    id: "pocket-trip-balance",
-    name: "Pocket Trip Balance",
-    tone: "Friendly pocket travel marker with list-based fairness cues.",
-    iconSrc: pocketIcon,
-    wordmarkSrc: pocketWordmark,
+    id: "designed-skew-motion",
+    name: "Option 3: Skew Motion",
+    tone: "Subtle forward tilt with straight route segments and blue waypoints.",
+    iconSrc: skewMotionIcon,
+    wordmarkSrc: skewMotionWordmark,
   },
 ];
 
-export const DEFAULT_BRAND_VARIANT_ID: BrandVariantId = "sunny-ledger-journey";
+export const DEFAULT_BRAND_VARIANT_ID: BrandVariantId = "designed-stacked-split";
 
 export function readBrandVariantId(): BrandVariantId {
   if (typeof window === "undefined") return DEFAULT_BRAND_VARIANT_ID;
