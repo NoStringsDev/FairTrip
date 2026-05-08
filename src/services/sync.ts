@@ -11,15 +11,11 @@ function trimTrailingSlash(value: string): string {
 }
 
 const configuredApi = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
-const API_BASES = Array.from(
-  new Set(
-    [
-      configuredApi ? trimTrailingSlash(configuredApi) : null,
-      // Same-origin API is used in production Worker deployments.
-      import.meta.env.PROD ? "" : null,
-    ].filter((value): value is string => value !== null)
-  )
-);
+const API_BASES = configuredApi
+  ? [trimTrailingSlash(configuredApi)]
+  : import.meta.env.PROD
+    ? [""]
+    : [];
 
 function apiUrl(path: string, base: string): string {
   return `${base}/api${path}`;
