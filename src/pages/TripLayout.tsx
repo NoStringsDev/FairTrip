@@ -27,7 +27,6 @@ export function TripLayout() {
       if (!t) {
         setTrip(null);
         setTripLookupState("missing");
-        nav("/welcome", { replace: true });
       } else {
         setTrip(normalizeTrip(t));
         setTripLookupState("ready");
@@ -63,10 +62,17 @@ export function TripLayout() {
     return (
       <div className="trip-app">
         <div className="app-shell trip-app__inner">
-          <div className="card">
-            {tripLookupState === "missing"
-              ? "Trip not found. Redirecting to welcome…"
-              : "Opening trip…"}
+          <div className="card stack">
+            <p style={{ margin: 0 }}>
+              {tripLookupState === "missing"
+                ? "This trip is not available on this device yet."
+                : "Opening trip…"}
+            </p>
+            {tripLookupState === "missing" ? (
+              <button className="btn btn-secondary" type="button" onClick={() => nav("/welcome")}>
+                Go to Welcome
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
