@@ -13,15 +13,25 @@ export function TripLayout() {
   const location = useLocation();
   const nav = useNavigate();
   const [trip, setTrip] = useState<Trip | null>(null);
+  const [tripLookupState, setTripLookupState] = useState<"loading" | "missing" | "ready">(
+    "loading"
+  );
 
   useEffect(() => {
     if (!tripId) return;
     let alive = true;
     async function load() {
+      setTripLookupState("loading");
       const t = await db.trips.get(tripId);
       if (!alive) return;
-      if (!t) nav("/welcome");
-      else setTrip(normalizeTrip(t));
+      if (!t) {
+        setTrip(null);
+        setTripLookupState("missing");
+        nav("/welcome", { replace: true });
+      } else {
+        setTrip(normalizeTrip(t));
+        setTripLookupState("ready");
+      }
     }
     void load();
     const id = window.setInterval(() => void load(), 1500);
@@ -47,7 +57,21 @@ export function TripLayout() {
     };
   }, []);
 
-  if (!tripId || !trip) return null;
+  if (!tripId) return null;
+
+  if (!trip || tripLookupState !== "ready") {
+    return (
+      <div className="trip-app">
+        <div className="app-shell trip-app__inner">
+          <div className="card">
+            {tripLookupState === "missing"
+              ? "Trip not found. Redirecting to welcome…"
+              : "Opening trip…"}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const hideSectionToggle =
     location.pathname.endsWith("/add") || location.pathname.endsWith("/edit");
