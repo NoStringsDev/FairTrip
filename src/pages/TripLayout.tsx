@@ -28,7 +28,18 @@ export function TripLayout() {
         setTrip(null);
         setTripLookupState("missing");
       } else {
-        setTrip(normalizeTrip(t));
+        const normalized = normalizeTrip(t);
+        setTrip((prev) => {
+          if (
+            prev &&
+            prev.id === normalized.id &&
+            prev.updatedAt === normalized.updatedAt &&
+            prev.closedAt === normalized.closedAt
+          ) {
+            return prev;
+          }
+          return normalized;
+        });
         setTripLookupState("ready");
       }
     }
