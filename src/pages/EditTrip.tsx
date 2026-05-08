@@ -20,6 +20,7 @@ type EntityDraft = {
 };
 
 export function EditTrip() {
+  const MAX_EXTRA_CURRENCIES = 5;
   const { trip: rawTrip } = useOutletContext<Ctx>();
   const trip = normalizeTrip(rawTrip);
   const nav = useNavigate();
@@ -31,15 +32,13 @@ export function EditTrip() {
   );
   const [homeCurrency, setHomeCurrency] = useState<CurrencyCode>(trip.homeCurrency);
   const [tripCurrency, setTripCurrency] = useState<CurrencyCode>(trip.tripCurrency);
-  const [extraCurrencies, setExtraCurrencies] = useState<
-    Partial<Record<CurrencyCode, boolean>>
-  >(() => {
-    const next: Partial<Record<CurrencyCode, boolean>> = {};
-    for (const c of trip.supportedCurrencies) {
-      if (c !== trip.homeCurrency && c !== trip.tripCurrency) next[c] = true;
-    }
-    return next;
-  });
+  const [additionalCurrencies, setAdditionalCurrencies] = useState<CurrencyCode[]>(
+    () =>
+      trip.supportedCurrencies.filter(
+        (c) => c !== trip.homeCurrency && c !== trip.tripCurrency
+      )
+  );
+  const [nextAdditionalCurrency, setNextAdditionalCurrency] = useState<CurrencyCode | "">("");
   const [entityCount, setEntityCount] = useState(trip.entities.length);
   const [entityDrafts, setEntityDrafts] = useState<EntityDraft[]>(
     trip.entities.map((ent) => ({
@@ -51,20 +50,29 @@ export function EditTrip() {
   );
   const [busy, setBusy] = useState(false);
 
-  const supportedCurrencies = useMemo((): CurrencyCode[] => {
-    const set = new Set<CurrencyCode>([homeCurrency, tripCurrency]);
-    for (const { code } of CURRENCY_OPTIONS) {
-      if (extraCurrencies[code]) set.add(code);
-    }
-    return Array.from(set);
-  }, [extraCurrencies, homeCurrency, tripCurrency]);
+  const sanitizedAdditionalCurrencies = useMemo(
+    () => additionalCurrencies.filter((c) => c !== homeCurrency && c !== tripCurrency),
+    [additionalCurrencies, homeCurrency, tripCurrency]
+  );
 
-  const alsoUseCurrencies = useMemo(
+  const supportedCurrencies = useMemo((): CurrencyCode[] => {
+    const set = new Set<CurrencyCode>([
+      homeCurrency,
+      tripCurrency,
+      ...sanitizedAdditionalCurrencies,
+    ]);
+    return Array.from(set);
+  }, [homeCurrency, sanitizedAdditionalCurrencies, tripCurrency]);
+
+  const availableAdditionalCurrencies = useMemo(
     () =>
       CURRENCY_OPTIONS.filter(
-        (c) => c.code !== homeCurrency && c.code !== tripCurrency
+        (c) =>
+          c.code !== homeCurrency &&
+          c.code !== tripCurrency &&
+          !sanitizedAdditionalCurrencies.includes(c.code)
       ),
-    [homeCurrency, tripCurrency]
+    [homeCurrency, sanitizedAdditionalCurrencies, tripCurrency]
   );
 
   const canSave = tripName.trim().length > 0 && entityCount >= 2;
@@ -90,6 +98,19 @@ export function EditTrip() {
       next[i] = { ...next[i], ...patch };
       return next;
     });
+  }
+
+  function addAdditionalCurrency() {
+    if (!nextAdditionalCurrency) return;
+    if (sanitizedAdditionalCurrencies.length >= MAX_EXTRA_CURRENCIES) return;
+    setAdditionalCurrencies((prev) =>
+      prev.includes(nextAdditionalCurrency) ? prev : [...prev, nextAdditionalCurrency]
+    );
+    setNextAdditionalCurrency("");
+  }
+
+  function removeAdditionalCurrency(code: CurrencyCode) {
+    setAdditionalCurrencies((prev) => prev.filter((c) => c !== code));
   }
 
   async function save() {
@@ -185,7 +206,13 @@ export function EditTrip() {
           <label>Home / card currency</label>
           <select
             value={homeCurrency}
-            onChange={(e) => setHomeCurrency(e.target.value as CurrencyCode)}
+            onChange={(e) => {
+              const next = e.target.value as CurrencyCode;
+              setHomeCurrency(next);
+              setAdditionalCurrencies((prev) =>
+                prev.filter((currency) => currency !== next && currency !== tripCurrency)
+              );
+            }}
           >
             {CURRENCY_OPTIONS.map((c) => (
               <option key={c.code} value={c.code}>
@@ -199,7 +226,13 @@ export function EditTrip() {
           <label>Main trip currency</label>
           <select
             value={tripCurrency}
-            onChange={(e) => setTripCurrency(e.target.value as CurrencyCode)}
+            onChange={(e) => {
+              const next = e.target.value as CurrencyCode;
+              setTripCurrency(next);
+              setAdditionalCurrencies((prev) =>
+                prev.filter((currency) => currency !== homeCurrency && currency !== next)
+              );
+            }}
           >
             {CURRENCY_OPTIONS.map((c) => (
               <option key={c.code} value={c.code}>
@@ -210,19 +243,47 @@ export function EditTrip() {
         </div>
 
         <div className="field">
-          <label>Also use</label>
-          <div className="stack" style={{ gap: 8 }}>
-            {alsoUseCurrencies.map((c) => (
-              <label key={c.code} className="row" style={{ gap: 10 }}>
-                <input
-                  type="checkbox"
-                  checked={Boolean(extraCurrencies[c.code])}
-                  onChange={(e) =>
-                    setExtraCurrencies((x) => ({ ...x, [c.code]: e.target.checked }))
-                  }
-                />
-                <span>{c.label}</span>
-              </label>
+          <label>Add additional currency (up to 5)</label>
+          <div className="row" style={{ alignItems: "flex-end", gap: 8 }}>
+            <select
+              value={nextAdditionalCurrency}
+              onChange={(e) => setNextAdditionalCurrency(e.target.value as CurrencyCode | "")}
+              disabled={
+                sanitizedAdditionalCurrencies.length >= MAX_EXTRA_CURRENCIES ||
+                availableAdditionalCurrencies.length === 0
+              }
+            >
+              <option value="">Select currency</option>
+              {availableAdditionalCurrencies.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={addAdditionalCurrency}
+              disabled={
+                !nextAdditionalCurrency ||
+                sanitizedAdditionalCurrencies.length >= MAX_EXTRA_CURRENCIES
+              }
+            >
+              Add
+            </button>
+          </div>
+          <div className="stack" style={{ gap: 8, marginTop: 10 }}>
+            {sanitizedAdditionalCurrencies.map((code) => (
+              <div key={code} className="row" style={{ justifyContent: "space-between" }}>
+                <span>{labelForCurrency(code)}</span>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => removeAdditionalCurrency(code)}
+                >
+                  Remove
+                </button>
+              </div>
             ))}
           </div>
           <p className="sub" style={{ margin: "6px 0 0" }}>

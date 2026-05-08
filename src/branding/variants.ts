@@ -44,7 +44,7 @@ export const BRAND_VARIANTS: BrandVariant[] = [
   },
 ];
 
-export const DEFAULT_BRAND_VARIANT_ID: BrandVariantId = "designed-stacked-split";
+export const DEFAULT_BRAND_VARIANT_ID: BrandVariantId = "designed-inline-break";
 
 export function readBrandVariantId(): BrandVariantId {
   if (typeof window === "undefined") return DEFAULT_BRAND_VARIANT_ID;
