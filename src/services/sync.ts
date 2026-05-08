@@ -11,11 +11,18 @@ function trimTrailingSlash(value: string): string {
 }
 
 const configuredApi = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
-const API_BASES = configuredApi
-  ? [trimTrailingSlash(configuredApi)]
+const PRIMARY_API_BASE = configuredApi
+  ? trimTrailingSlash(configuredApi)
   : import.meta.env.PROD
-    ? [""]
-    : [];
+    ? ""
+    : null;
+const PULL_API_BASES = Array.from(
+  new Set(
+    [PRIMARY_API_BASE, import.meta.env.PROD ? "" : null].filter(
+      (value): value is string => value !== null
+    )
+  )
+);
 
 function apiUrl(path: string, base: string): string {
   return `${base}/api${path}`;
@@ -32,7 +39,7 @@ async function readErrorBody(res: Response): Promise<string> {
 
 async function fetchWithFallback(path: string, init?: RequestInit): Promise<Response> {
   let lastError: string | null = null;
-  for (const base of API_BASES) {
+  for (const base of PULL_API_BASES) {
     const url = apiUrl(path, base);
     try {
       const res = await fetch(url, init);
@@ -47,25 +54,43 @@ async function fetchWithFallback(path: string, init?: RequestInit): Promise<Resp
 }
 
 export function syncEnabled(): boolean {
-  return API_BASES.length > 0;
+  return PRIMARY_API_BASE !== null;
 }
 
 export async function pushTripAndExpenses(payload: unknown): Promise<void> {
-  if (!syncEnabled()) return;
-  const res = await fetchWithFallback("/sync/push", {
+  if (!PRIMARY_API_BASE) return;
+  const res = await fetch(apiUrl("/sync/push", PRIMARY_API_BASE), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error(`Sync failed ${res.status}`);
+  if (!res.ok) {
+    const t = await readErrorBody(res);
+    throw new Error(t || `Sync failed ${res.status}`);
+  }
 }
 
 export async function pullTrip(tripCode: string): Promise<unknown | null> {
   if (!syncEnabled()) return null;
-  const res = await fetchWithFallback(
-    `/sync/pull?tripCode=${encodeURIComponent(tripCode)}`
-  );
-  return res.json();
+  let lastError: string | null = null;
+  for (const base of PULL_API_BASES) {
+    const url = apiUrl(`/sync/pull?tripCode=${encodeURIComponent(tripCode)}`, base);
+    try {
+      const res = await fetch(url);
+      if (!res.ok) {
+        const body = await readErrorBody(res);
+        lastError = body || `Sync pull failed (${res.status}) at ${url}`;
+        continue;
+      }
+      const data = (await res.json()) as { trip?: unknown | null } | null;
+      if (data?.trip) return data;
+      // If this backend returns not-found, try the next candidate backend.
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : "Network request failed";
+    }
+  }
+  if (lastError) throw new Error(lastError);
+  return null;
 }
 
 export async function uploadReceipt(
@@ -73,12 +98,15 @@ export async function uploadReceipt(
   expenseId: string,
   file: Blob
 ): Promise<{ r2Key: string } | null> {
-  if (!syncEnabled()) return null;
+  if (!PRIMARY_API_BASE) return null;
   const fd = new FormData();
   fd.append("tripCode", tripCode);
   fd.append("expenseId", expenseId);
   fd.append("file", file, "receipt.jpg");
-  const res = await fetchWithFallback("/receipts", { method: "POST", body: fd });
+  const res = await fetch(apiUrl("/receipts", PRIMARY_API_BASE), {
+    method: "POST",
+    body: fd,
+  });
   if (!res.ok) return null;
   return res.json() as Promise<{ r2Key: string }>;
 }
@@ -91,9 +119,12 @@ export async function fetchFxFromServer(
   rateDate: string;
   retrievalType: string;
 } | null> {
-  if (!syncEnabled()) return null;
-  const res = await fetchWithFallback(
-    `/fx?date=${encodeURIComponent(isoDate)}&currency=${encodeURIComponent(currency)}`
+  if (!PRIMARY_API_BASE) return null;
+  const res = await fetch(
+    apiUrl(
+      `/fx?date=${encodeURIComponent(isoDate)}&currency=${encodeURIComponent(currency)}`,
+      PRIMARY_API_BASE
+    )
   );
   if (!res.ok) return null;
   return res.json() as Promise<{

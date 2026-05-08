@@ -242,7 +242,7 @@ export default {
         const tripCode = url.searchParams.get("tripCode")?.trim().toUpperCase();
         if (!tripCode) return json({ error: "tripCode" }, env, origin, 400);
         const trip = await env.DB.prepare(
-          `SELECT * FROM trips WHERE UPPER(trip_code) = ?`
+          `SELECT * FROM trips WHERE UPPER(TRIM(trip_code)) = ?`
         )
           .bind(tripCode)
           .first();
@@ -264,7 +264,7 @@ export default {
           return json({ error: "invalid form" }, env, origin, 400);
         }
         const trip = await env.DB.prepare(
-          `SELECT id FROM trips WHERE UPPER(trip_code) = ?`
+          `SELECT id FROM trips WHERE UPPER(TRIM(trip_code)) = ?`
         )
           .bind(tripCode)
           .first<{ id: string }>();
