@@ -5,6 +5,6 @@
   <circle cx="242" cy="40" r="3.2" fill="#3b82f6"/>
   <g fill="#0f172a" font-family="DM Sans, system-ui, sans-serif" font-weight="700" letter-spacing="-0.8">
     <text x="26" y="40" font-size="40">Fair</text>
-    <text x="116" y="74" font-size="40">Trip</text>
+    <text x="93" y="70" font-size="40">Trip</text>
   </g>
 </svg>
