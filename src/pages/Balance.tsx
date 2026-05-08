@@ -8,12 +8,30 @@ import { formatMinor } from "../domain/currency";
 import { EntityChip, EntityChipById } from "../components/EntityChip";
 import { schedulePush } from "../services/tripSync";
 import { normalizeTrip } from "../lib/tripNormalize";
+import { normalizeExpense } from "../lib/expenseNormalize";
 
 type Ctx = { trip: Trip };
+const EXPENSES_UPDATED_EVENT = "fairtrip:expenses-updated";
+
+function sameExpenseRows(a: Expense[], b: Expense[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    const left = a[i];
+    const right = b[i];
+    if (
+      left.id !== right.id ||
+      left.updatedAt !== right.updatedAt ||
+      left.deletedAt !== right.deletedAt
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
 
 export function Balance() {
   const { trip: rawTrip } = useOutletContext<Ctx>();
-  const trip = normalizeTrip(rawTrip);
+  const trip = useMemo(() => normalizeTrip(rawTrip), [rawTrip]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
 
   useEffect(() => {
@@ -23,13 +41,20 @@ export function Balance() {
         .where("tripId")
         .equals(trip.id)
         .sortBy("expenseTimestamp");
-      if (alive) setExpenses(rows.reverse());
+      if (!alive) return;
+      const next = rows.reverse();
+      setExpenses((prev) => (sameExpenseRows(prev, next) ? prev : next));
+    }
+    function onExpensesUpdated(e: Event) {
+      const detail = (e as CustomEvent<{ tripId?: string }>).detail;
+      if (detail?.tripId && detail.tripId !== trip.id) return;
+      void load();
     }
     void load();
-    const id = window.setInterval(() => void load(), 1200);
+    window.addEventListener(EXPENSES_UPDATED_EVENT, onExpensesUpdated as EventListener);
     return () => {
       alive = false;
-      window.clearInterval(id);
+      window.removeEventListener(EXPENSES_UPDATED_EVENT, onExpensesUpdated as EventListener);
     };
   }, [trip.id]);
 
@@ -49,7 +74,7 @@ export function Balance() {
       m.set(ex.payerEntityId, (m.get(ex.payerEntityId) ?? 0) + eff.gbpMinor);
     }
     return m;
-  }, [expenses, trip]);
+  }, [expenses, trip.entities]);
 
   const exportText = useMemo(() => {
     const lines: string[] = [];
@@ -75,7 +100,7 @@ export function Balance() {
       );
     }
     return lines.join("\n");
-  }, [paidByEntity, settlement, trip]);
+  }, [paidByEntity, settlement, trip.entities, trip.name, trip.tripCode]);
 
   async function closeTrip() {
     if (!confirm("Close trip? You can still view history.")) return;

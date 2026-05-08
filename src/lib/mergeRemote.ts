@@ -136,13 +136,13 @@ export async function mergePullIntoLocal(
 ): Promise<void> {
   const mappedTrip = mapRemoteTrip(trip);
   const localTrip = await db.trips.get(mappedTrip.id);
-  if (!localTrip || mappedTrip.updatedAt >= localTrip.updatedAt) {
+  if (!localTrip || mappedTrip.updatedAt > localTrip.updatedAt) {
     await db.trips.put(mappedTrip);
   }
   for (const row of expenses) {
     const e = mapRemoteExpense(row);
     const local = await db.expenses.get(e.id);
-    if (!local || e.updatedAt >= local.updatedAt) {
+    if (!local || e.updatedAt > local.updatedAt) {
       await db.expenses.put(e);
     }
   }

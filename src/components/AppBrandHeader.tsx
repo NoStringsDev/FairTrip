@@ -1,10 +1,20 @@
 import { useEffect, useState } from "react";
+import { liveQuery } from "dexie";
 import { useMatch } from "react-router-dom";
 import inlineBreakWordmark from "../assets/branding/designed-inline-break-wordmark.svg";
 import { db } from "../db/database";
 import { normalizeTrip } from "../lib/tripNormalize";
 import { syncEnabled } from "../services/sync";
 import type { Trip } from "../types";
+
+function sameHeaderTrip(a: Trip, b: Trip): boolean {
+  return (
+    a.id === b.id &&
+    a.name === b.name &&
+    a.tripCode === b.tripCode &&
+    a.closedAt === b.closedAt
+  );
+}
 
 export function AppBrandHeader() {
   const match = useMatch("/trip/:tripId/*");
@@ -19,17 +29,17 @@ export function AppBrandHeader() {
       setTrip(null);
       return;
     }
-    let alive = true;
-    async function load() {
-      const row = await db.trips.get(tripId);
-      if (!alive) return;
-      setTrip(row ? normalizeTrip(row) : null);
-    }
-    void load();
-    const id = window.setInterval(() => void load(), 1500);
+    const subscription = liveQuery(() => db.trips.get(tripId)).subscribe((row) => {
+      const next = row ? normalizeTrip(row) : null;
+      setTrip((prev) => {
+        if (prev && next && sameHeaderTrip(prev, next)) {
+          return prev;
+        }
+        return next;
+      });
+    });
     return () => {
-      alive = false;
-      window.clearInterval(id);
+      subscription.unsubscribe();
     };
   }, [tripId]);
 

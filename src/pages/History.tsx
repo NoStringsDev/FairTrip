@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { liveQuery } from "dexie";
 import { Link, useOutletContext } from "react-router-dom";
 import { db } from "../db/database";
 import type { Expense, Trip } from "../types";
@@ -8,8 +9,26 @@ import { effectiveGbpFromExpense } from "../domain/effective";
 import { normalizeExpense } from "../lib/expenseNormalize";
 import { normalizeTrip } from "../lib/tripNormalize";
 import { splitSummary } from "../lib/expenseLabels";
+import { pullAndMergeTrip } from "../services/tripSync";
+import { syncEnabled } from "../services/sync";
 
 type Ctx = { trip: Trip };
+
+function sameExpenseRows(a: Expense[], b: Expense[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i += 1) {
+    const left = a[i];
+    const right = b[i];
+    if (
+      left.id !== right.id ||
+      left.updatedAt !== right.updatedAt ||
+      left.deletedAt !== right.deletedAt
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
 
 export function History() {
   const { trip: rawTrip } = useOutletContext<Ctx>();
@@ -19,19 +38,35 @@ export function History() {
   const [assignFilter, setAssignFilter] = useState<string>("all");
 
   useEffect(() => {
-    let alive = true;
-    async function load() {
+    const subscription = liveQuery(async () => {
       const rows = await db.expenses.where("tripId").equals(trip.id).toArray();
-      if (alive)
-        setExpenses(rows.sort((a, b) => b.expenseTimestamp - a.expenseTimestamp));
-    }
-    void load();
-    const id = window.setInterval(() => void load(), 1500);
+      return rows.sort((a, b) => b.expenseTimestamp - a.expenseTimestamp);
+    }).subscribe((next) => {
+      let changed = false;
+      setExpenses((prev) => {
+        changed = !sameExpenseRows(prev, next);
+        return changed ? next : prev;
+      });
+      if (changed) {
+        window.dispatchEvent(
+          new CustomEvent(EXPENSES_UPDATED_EVENT, { detail: { tripId: trip.id } })
+        );
+      }
+    });
     return () => {
-      alive = false;
-      window.clearInterval(id);
+      subscription.unsubscribe();
     };
   }, [trip.id]);
+
+  useEffect(() => {
+    if (!syncEnabled()) return;
+    const id = window.setInterval(() => {
+      void pullAndMergeTrip(trip.tripCode);
+    }, 3000);
+    return () => {
+      window.clearInterval(id);
+    };
+  }, [trip.tripCode]);
 
   const filtered = useMemo(() => {
     return expenses.filter((e) => {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { liveQuery } from "dexie";
 import { Link, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 import { db } from "../db/database";
 import type { Trip } from "../types";
@@ -7,6 +8,19 @@ import { MobileTripNav } from "../components/MobileTripNav";
 import { flushSyncQueue } from "../services/tripSync";
 import { normalizeTrip } from "../lib/tripNormalize";
 import { setLastTripId } from "../lib/lastTrip";
+
+function sameTripUiState(a: Trip, b: Trip): boolean {
+  return (
+    a.id === b.id &&
+    a.name === b.name &&
+    a.tripCode === b.tripCode &&
+    a.closedAt === b.closedAt &&
+    a.tripNotes === b.tripNotes &&
+    a.participantCount === b.participantCount &&
+    JSON.stringify(a.entities) === JSON.stringify(b.entities) &&
+    JSON.stringify(a.supportedCurrencies) === JSON.stringify(b.supportedCurrencies)
+  );
+}
 
 export function TripLayout() {
   const { tripId } = useParams();
@@ -19,26 +33,26 @@ export function TripLayout() {
 
   useEffect(() => {
     if (!tripId) return;
-    let alive = true;
-    async function load() {
-      setTripLookupState("loading");
-      const t = await db.trips.get(tripId);
-      if (!alive) return;
+    setTripLookupState("loading");
+    const subscription = liveQuery(() => db.trips.get(tripId)).subscribe((t) => {
       if (!t) {
         setTrip(null);
         setTripLookupState("missing");
-      } else {
-        setTrip(normalizeTrip(t));
-        setTripLookupState("ready");
+        return;
       }
-    }
-    void load();
-    const id = window.setInterval(() => void load(), 1500);
+      const normalized = normalizeTrip(t);
+      setTrip((prev) => {
+        if (prev && sameTripUiState(prev, normalized)) {
+          return prev;
+        }
+        return normalized;
+      });
+      setTripLookupState("ready");
+    });
     return () => {
-      alive = false;
-      window.clearInterval(id);
+      subscription.unsubscribe();
     };
-  }, [tripId, nav]);
+  }, [tripId]);
 
   useEffect(() => {
     if (!trip?.id) return;
