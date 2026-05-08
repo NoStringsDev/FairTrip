@@ -24,6 +24,19 @@ const PULL_API_BASES = Array.from(
   )
 );
 
+type PullAttempt = {
+  url: string;
+  status: number | null;
+  found: boolean;
+  error?: string;
+};
+
+let lastPullAttempts: PullAttempt[] = [];
+
+export function getLastPullAttempts(): PullAttempt[] {
+  return [...lastPullAttempts];
+}
+
 function apiUrl(path: string, base: string): string {
   return `${base}/api${path}`;
 }
@@ -73,6 +86,7 @@ export async function pushTripAndExpenses(payload: unknown): Promise<void> {
 export async function pullTrip(tripCode: string): Promise<unknown | null> {
   if (!syncEnabled()) return null;
   let lastError: string | null = null;
+  const attempts: PullAttempt[] = [];
   for (const base of PULL_API_BASES) {
     const url = apiUrl(`/sync/pull?tripCode=${encodeURIComponent(tripCode)}`, base);
     try {
@@ -80,15 +94,33 @@ export async function pullTrip(tripCode: string): Promise<unknown | null> {
       if (!res.ok) {
         const body = await readErrorBody(res);
         lastError = body || `Sync pull failed (${res.status}) at ${url}`;
+        attempts.push({
+          url,
+          status: res.status,
+          found: false,
+          error: body || undefined,
+        });
         continue;
       }
       const data = (await res.json()) as { trip?: unknown | null } | null;
-      if (data?.trip) return data;
+      const found = Boolean(data?.trip);
+      attempts.push({ url, status: res.status, found });
+      if (found) {
+        lastPullAttempts = attempts;
+        return data;
+      }
       // If this backend returns not-found, try the next candidate backend.
     } catch (err) {
       lastError = err instanceof Error ? err.message : "Network request failed";
+      attempts.push({
+        url,
+        status: null,
+        found: false,
+        error: lastError,
+      });
     }
   }
+  lastPullAttempts = attempts;
   if (lastError) throw new Error(lastError);
   return null;
 }

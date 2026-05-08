@@ -4,6 +4,7 @@ import { db } from "../db/database";
 import { clearLastTripId, getLastTripId, setLastTripId } from "../lib/lastTrip";
 import { resolveTripByCode } from "../services/tripAccess";
 import { normalizeTrip } from "../lib/tripNormalize";
+import { getLastPullAttempts } from "../services/sync";
 
 export function Welcome() {
   const nav = useNavigate();
@@ -27,7 +28,20 @@ export function Welcome() {
         nav(`/trip/${trip.id}/balance`);
         return true;
       }
-      setErr("Trip not found (check code or sync API)");
+      const attempts = getLastPullAttempts();
+      const lookedUp =
+        attempts.length > 0
+          ? ` Checked: ${attempts
+              .map((a) => {
+                const endpoint = new URL(a.url, window.location.origin).origin;
+                if (a.status === null) return `${endpoint} (network error)`;
+                return `${endpoint} (${a.status}, ${a.found ? "found" : "not found"})`;
+              })
+              .join(", ")}.`
+          : "";
+      setErr(
+        `Trip not found on sync backend.${lookedUp} Ask the trip owner to open this trip while online to publish latest data.`
+      );
       return false;
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Failed");
