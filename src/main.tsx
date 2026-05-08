@@ -7,7 +7,13 @@ import "./index.css";
 const host = window.location.hostname;
 const isLocalHost = host === "localhost" || host === "127.0.0.1";
 if (!isLocalHost || import.meta.env.VITE_ENABLE_PWA_LOCAL === "1") {
-  registerSW({ immediate: true });
+  const updateSW = registerSW({
+    immediate: true,
+    onNeedRefresh() {
+      // Force activation of the newest SW and reload into the new asset set.
+      void updateSW(true);
+    },
+  });
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
