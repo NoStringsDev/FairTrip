@@ -735,13 +735,8 @@ button {
 
 .fairtrip-splash__trip {
   margin-left: 0.06em;
-  display: inline-flex;
-  align-items: baseline;
-}
-
-.fairtrip-splash__trip-letter {
-  display: inline-block;
-  min-width: 0.52ch;
+  display: inline;
+  white-space: nowrap;
 }
 
 .fairtrip-splash__track {
