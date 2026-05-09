@@ -5,6 +5,9 @@ compatibility_date = "2025-05-01"
 [assets]
 directory = "./dist"
 binding = "ASSETS"
+# Required for React Router deep links / browser refresh — navigation requests bypass the Worker script
+# unless this is set (Workers serve static assets first for navigations since compatibility_date 2025-04-01).
+not_found_handling = "single-page-application"
 
 [[d1_databases]]
 binding = "DB"
