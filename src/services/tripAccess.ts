@@ -6,7 +6,7 @@ export async function resolveTripByCode(code: string): Promise<Trip | null> {
   const normalized = code.trim().toUpperCase();
   if (!normalized) return null;
   const merged = await pullAndMergeTrip(normalized);
-  if (merged) {
+  if (merged.ok) {
     const remoteTrip = await db.trips.where("tripCode").equals(normalized).first();
     if (remoteTrip) return remoteTrip;
   }

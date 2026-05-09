@@ -1,13 +1,19 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { liveQuery } from "dexie";
 import { Link, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 import { db } from "../db/database";
 import type { Trip } from "../types";
+import { TripPullError } from "../components/TripPullError";
 import { TripPullSyncOutlet } from "../components/TripPullSyncOutlet";
+import { TripSyncBar } from "../components/TripSyncBar";
 import { FloatingAddButton } from "../components/FloatingAddButton";
 import { MobileTripNav } from "../components/MobileTripNav";
 import { useTripRemoteSyncCoordinator } from "../hooks/useTripRemoteSyncCoordinator";
-import { flushSyncQueue } from "../services/tripSync";
+import {
+  flushSyncQueue,
+  formatPullMergeError,
+  type PullMergeResult,
+} from "../services/tripSync";
 import { normalizeTrip } from "../lib/tripNormalize";
 import { setLastTripId } from "../lib/lastTrip";
 
@@ -32,6 +38,12 @@ export function TripLayout() {
   const [tripLookupState, setTripLookupState] = useState<"loading" | "missing" | "ready">(
     "loading"
   );
+  const [pullError, setPullError] = useState<string | null>(null);
+
+  const onPullResult = useCallback((r: PullMergeResult) => {
+    if (r.ok) setPullError(null);
+    else setPullError(formatPullMergeError(r));
+  }, []);
 
   useEffect(() => {
     if (!tripId) return;
@@ -72,7 +84,7 @@ export function TripLayout() {
     };
   }, []);
 
-  useTripRemoteSyncCoordinator(trip?.tripCode ?? null);
+  useTripRemoteSyncCoordinator(trip?.tripCode ?? null, onPullResult);
 
   if (!tripId) return null;
 
@@ -127,6 +139,10 @@ export function TripLayout() {
   return (
     <div className="trip-app">
       <div className="app-shell trip-app__inner">
+        <div className="trip-sync-toolbar row">
+          <TripSyncBar tripCode={trip.tripCode} onPullResult={onPullResult} />
+          <TripPullError message={pullError} />
+        </div>
         <details className="trip-actions">
           <summary>
             Trip actions
@@ -148,7 +164,7 @@ export function TripLayout() {
           </div>
         </details>
         {!hideSectionToggle ? <MobileTripNav tripId={tripId} /> : null}
-        <TripPullSyncOutlet tripCode={trip.tripCode}>
+        <TripPullSyncOutlet tripCode={trip.tripCode} onPullResult={onPullResult}>
           <Outlet context={{ trip }} />
         </TripPullSyncOutlet>
       </div>
