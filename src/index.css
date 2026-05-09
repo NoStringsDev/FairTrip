@@ -175,12 +175,70 @@ button {
 }
 
 .trip-app {
-  min-height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   padding-bottom: calc(112px + env(safe-area-inset-bottom));
 }
 
 .trip-app__inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   padding-bottom: 8px;
+}
+
+.trip-pull-sync {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  position: relative;
+}
+
+.trip-pull-sync__rail {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.trip-pull-sync__rail--active {
+  margin-bottom: 2px;
+}
+
+.trip-pull-sync__spinner {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid rgba(14, 165, 233, 0.28);
+  border-top-color: var(--accent);
+  box-sizing: border-box;
+  transform-origin: center;
+  transition: opacity 140ms ease;
+}
+
+.trip-pull-sync__spinner--spin {
+  animation: trip-pull-sync-spin 0.65s linear infinite;
+}
+
+@keyframes trip-pull-sync-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.trip-pull-sync__content {
+  min-height: 100%;
 }
 
 .mobile-trip-nav-toggle {
@@ -350,6 +408,8 @@ button {
 
 .app-root {
   min-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .brand-header {

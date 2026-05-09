@@ -1,10 +1,6 @@
 import { db } from "../db/database";
 import type { FxRateRow, QuoteCurrency } from "../types";
-import {
-  fetchGbpPerUnitForDate,
-  fetchLatestGbpPerUnit,
-  resolveGbpPerUnitForExpenseDate,
-} from "../domain/fx";
+import { resolveGbpPerUnitForExpenseDate } from "../domain/fx";
 
 function fxId(rateDate: string, quote: QuoteCurrency): string {
   return `${rateDate}|GBP|${quote}`;
