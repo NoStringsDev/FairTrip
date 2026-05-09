@@ -10,8 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
-    "deploy:worker": "npm run build && cd worker && npx wrangler deploy",
-    "cf:dev": "concurrently \"vite\" \"cd worker && npx wrangler dev\""
+    "deploy:worker": "npm run build && npx wrangler deploy -c wrangler.toml",
+    "cf:dev": "concurrently \"vite\" \"npx wrangler dev -c wrangler.toml\""
   },
   "dependencies": {
     "dexie": "^4.0.10",
