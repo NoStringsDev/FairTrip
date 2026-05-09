@@ -6,6 +6,7 @@ export const SPLASH_COOLDOWN_MS = 90_000;
 /** How long the splash stays readable after the wordmark is shown (ms). */
 const SPLASH_HOLD_MS = 2850;
 
+/** Spans exist only to measure the final dot stop (centre of last letter "p"). */
 const TRIP_CHARS = ["T", "r", "i", "p"] as const;
 
 /**
@@ -16,31 +17,6 @@ function sizesFromSplashFont(px: number): { linePx: number; dotDiamPx: number; r
   const linePx = (4 / 54) * px;
   const dotDiamPx = (9 / 54) * px;
   return { linePx, dotDiamPx, radiusPx: dotDiamPx / 2 };
-}
-
-function easeIncoming(t: number): number {
-  return t * t * (3 - 2 * t);
-}
-
-/** Dot-centre stops: start flush with bar start (+ radius); then each Trip letter centre. */
-function buildPathStops(
-  trailLeft: number,
-  letterCenters: readonly number[],
-  radiusPx: number
-): number[] {
-  if (letterCenters.length === 0) return [trailLeft + radiusPx];
-  return [trailLeft + radiusPx, ...letterCenters];
-}
-
-function positionAlongPath(points: readonly number[], t: number): number {
-  const nSeg = Math.max(points.length - 1, 1);
-  const u = t * nSeg;
-  const si = Math.min(nSeg - 1, Math.floor(u));
-  const ltRaw = Math.min(Math.max(u - si, 0), 1);
-  const lt = easeIncoming(ltRaw);
-  const a = points[si];
-  const b = points[Math.min(si + 1, points.length - 1)];
-  return a + (b - a) * lt;
 }
 
 function applyTrailAndDot(opts: {
@@ -65,6 +41,11 @@ function applyTrailAndDot(opts: {
   dotEl.style.transform = `translate3d(${dotLeftPx}px, -50%, 0)`;
 }
 
+function applyWordWipe(wordClipEl: HTMLElement, u: number): void {
+  const p = Math.min(1, Math.max(0, u));
+  wordClipEl.style.clipPath = `inset(0 ${(1 - p) * 100}% 0 0)`;
+}
+
 export function FairTripSplash() {
   const [visible, setVisible] = useState(true);
   const [replayKey, setReplayKey] = useState(0);
@@ -74,12 +55,11 @@ export function FairTripSplash() {
   const wasHiddenRef = useRef(false);
   const letterRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const stackRef = useRef<HTMLDivElement | null>(null);
+  const wordClipRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
   const trailRef = useRef<HTMLSpanElement | null>(null);
   const dotRef = useRef<HTMLSpanElement | null>(null);
   const rafRef = useRef<number | null>(null);
-
-  const [lettersLit, setLettersLit] = useState(0);
 
   const clearHide = useCallback(() => {
     if (hideTimerRef.current) {
@@ -100,7 +80,6 @@ export function FairTripSplash() {
     if (!force && now - lastAtRef.current < SPLASH_COOLDOWN_MS) return;
     clearHide();
     lastAtRef.current = now;
-    setLettersLit(0);
     setShowExactLogo(false);
     setReplayKey((k) => k + 1);
     setVisible(true);
@@ -144,13 +123,23 @@ export function FairTripSplash() {
     cancelAnim();
 
     const stack = stackRef.current;
+    const wordClip = wordClipRef.current;
     const track = trackRef.current;
     const trail = trailRef.current;
     const dot = dotRef.current;
 
     const letterEls = TRIP_CHARS.map((_, idx) => letterRefs.current[idx]).filter(Boolean) as HTMLElement[];
 
-    if (!visible || !stack || !track || !trail || !dot || letterEls.length !== TRIP_CHARS.length) return;
+    if (
+      !visible ||
+      !stack ||
+      !wordClip ||
+      !track ||
+      !trail ||
+      !dot ||
+      letterEls.length !== TRIP_CHARS.length
+    )
+      return;
 
     const reducedMotion =
       typeof window !== "undefined" &&
@@ -166,57 +155,67 @@ export function FairTripSplash() {
 
     dot.style.opacity = "1";
 
-    const measureTrailLeftCentersRadius = (): { trailLeftPx: number; centers: number[] } => {
+    const measureGeometry = (): { trailLeftPx: number; startCx: number; endCx: number } => {
       const trRect = track.getBoundingClientRect();
-      const stackRect = stack.getBoundingClientRect();
-      /* Bar begins at combined wordmark left edge in SVG — match stack/content left vs track inset. */
-      const trailLeftPx = Math.round(stackRect.left - trRect.left);
+      const wcRect = wordClip.getBoundingClientRect();
+      const trailLeftPx = Math.max(0, Math.round(wcRect.left - trRect.left));
       const centers = letterEls.map((el) => {
         const r = el.getBoundingClientRect();
         return r.left + r.width / 2 - trRect.left;
       });
-      return { trailLeftPx: Math.max(0, trailLeftPx), centers };
+      const endCx = centers[centers.length - 1];
+      const startCx = trailLeftPx + radiusPx;
+      return { trailLeftPx, startCx, endCx };
     };
 
+    const durationMs = 1680;
+
     if (reducedMotion) {
-      setLettersLit(TRIP_CHARS.length);
-      const { trailLeftPx, centers } = measureTrailLeftCentersRadius();
-      const cxLast = centers[centers.length - 1];
+      const { trailLeftPx, startCx, endCx } = measureGeometry();
+      const cx = Number.isFinite(endCx) ? endCx : startCx + 80;
       applyTrailAndDot({
         trailEl: trail,
         dotEl: dot,
         trailLeftPx,
-        centerX: cxLast,
+        centerX: cx,
         radiusPx,
         linePx,
       });
+      applyWordWipe(wordClip, 1);
       setShowExactLogo(true);
       return () => {};
     }
 
-    const durationMs = 2000;
-
     const run = (): void => {
-      const { trailLeftPx, centers } = measureTrailLeftCentersRadius();
-      const stops = buildPathStops(trailLeftPx, centers, radiusPx);
+      const { trailLeftPx, startCx, endCx } = measureGeometry();
+
+      let cx1 = endCx;
+      if (!Number.isFinite(cx1) || cx1 <= startCx + 8) {
+        cx1 = startCx + wcFallbackSpan(wordClip);
+      }
+
+      const cx0 = startCx;
+
       trail.style.width = "0";
       dot.style.opacity = "1";
+
+      wordClip.style.willChange = "clip-path";
+      applyWordWipe(wordClip, 0);
       applyTrailAndDot({
         trailEl: trail,
         dotEl: dot,
         trailLeftPx,
-        centerX: stops[0],
+        centerX: cx0,
         radiusPx,
         linePx,
       });
 
       const t0 = performance.now();
-      let prevLit = 0;
 
       const frame = (): void => {
         const now = performance.now();
-        const pr = Math.min(1, (now - t0) / durationMs);
-        const centerX = positionAlongPath(stops, pr);
+        const u = Math.min(1, (now - t0) / durationMs);
+        const centerX = cx0 + u * (cx1 - cx0);
 
         applyTrailAndDot({
           trailEl: trail,
@@ -226,21 +225,14 @@ export function FairTripSplash() {
           radiusPx,
           linePx,
         });
+        applyWordWipe(wordClip, u);
 
-        let nextLit = 0;
-        for (let ki = 0; ki < TRIP_CHARS.length; ki++) {
-          if (centerX >= stops[ki + 1] - 0.5) nextLit = ki + 1;
-        }
-        if (nextLit !== prevLit) {
-          prevLit = nextLit;
-          setLettersLit(nextLit);
-        }
-
-        if (pr < 1) {
+        if (u < 1) {
           rafRef.current = globalThis.requestAnimationFrame(frame);
         } else {
           rafRef.current = null;
-          setLettersLit(TRIP_CHARS.length);
+          wordClip.style.willChange = "auto";
+          applyWordWipe(wordClip, 1);
           setShowExactLogo(true);
         }
       };
@@ -248,12 +240,15 @@ export function FairTripSplash() {
       rafRef.current = globalThis.requestAnimationFrame(frame);
     };
 
+    function wcFallbackSpan(wcEl: HTMLElement): number {
+      const a = wcEl.getBoundingClientRect().width;
+      /* Bar length scales with word clip width (~SVG proportions vs full word row). */
+      return Math.min(a * 0.62, Math.max(a * 0.45, 64));
+    }
+
     let bootAttempts = 0;
     function boot(): void {
-      const { centers } = measureTrailLeftCentersRadius();
-      const laidOut =
-        centers.every((n) => Number.isFinite(n)) &&
-        letterEls.every((el) => el.getBoundingClientRect().width > 0.5);
+      const laidOut = letterEls.every((el) => el.getBoundingClientRect().width > 0.5);
       bootAttempts++;
       if (!laidOut && bootAttempts < 32) {
         rafRef.current = globalThis.requestAnimationFrame(boot);
@@ -267,6 +262,7 @@ export function FairTripSplash() {
     return () => {
       cancelAnim();
     };
+    // replayKey rewires subtree
   }, [cancelAnim, replayKey, visible]);
 
   return (
@@ -281,22 +277,24 @@ export function FairTripSplash() {
             className={`fairtrip-splash__stack${showExactLogo ? " fairtrip-splash__stack--muted" : ""}`}
             ref={stackRef}
           >
-            <div className="fairtrip-splash__word-row" aria-hidden>
-              <span className="fairtrip-splash__fair">Fair</span>
-              <span className="fairtrip-splash__trip">
-                {TRIP_CHARS.map((ch, idx) => (
-                  <span
-                    key={`${replayKey}-${idx}`}
-                    ref={(el) => {
-                      letterRefs.current[idx] = el;
-                    }}
-                    className={`fairtrip-splash__trip-letter${lettersLit > idx ? " fairtrip-splash__trip-letter--on" : ""}`}
-                    aria-hidden
-                  >
-                    {ch}
-                  </span>
-                ))}
-              </span>
+            <div className="fairtrip-splash__word-clip" ref={wordClipRef}>
+              <div className="fairtrip-splash__word-row" aria-hidden>
+                <span>Fair</span>
+                <span className="fairtrip-splash__trip">
+                  {TRIP_CHARS.map((ch, idx) => (
+                    <span
+                      key={`${replayKey}-${idx}`}
+                      ref={(el) => {
+                        letterRefs.current[idx] = el;
+                      }}
+                      className="fairtrip-splash__trip-letter"
+                      aria-hidden
+                    >
+                      {ch}
+                    </span>
+                  ))}
+                </span>
+              </div>
             </div>
             <div className="fairtrip-splash__track" ref={trackRef} aria-hidden>
               <span className="fairtrip-splash__line" ref={trailRef} />
