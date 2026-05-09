@@ -5,8 +5,8 @@ export const SPLASH_COOLDOWN_MS = 90_000;
 /** How long the splash stays readable after the motion completes (ms). */
 const SPLASH_HOLD_MS = 2850;
 
-/** Spans exist only to measure the final dot stop (centre of last letter "p"). */
-const TRIP_CHARS = ["T", "r", "i", "p"] as const;
+/** ~33% faster than prior 1680ms (same feel, shorter hold). */
+const WIPE_DURATION_MS = 1120;
 
 /**
  * Matches `designed-inline-break-wordmark.svg` (viewBox 0 0 320 88): text cap ~54 units,
@@ -16,6 +16,24 @@ function sizesFromSplashFont(px: number): { linePx: number; dotDiamPx: number; r
   const linePx = (4 / 54) * px;
   const dotDiamPx = (9 / 54) * px;
   return { linePx, dotDiamPx, radiusPx: dotDiamPx / 2 };
+}
+
+/** Horizontal centre of the final ‘p’ in “Trip” (one text run = correct kerning). */
+function measurePCenterX(tripEl: HTMLElement, trRect: DOMRect): number | null {
+  const child = tripEl.firstChild;
+  if (!child || child.nodeType !== Node.TEXT_NODE) return null;
+  const text = child.textContent ?? "";
+  if (text.length < 4) return null;
+  try {
+    const range = document.createRange();
+    range.setStart(child, 3);
+    range.setEnd(child, 4);
+    const br = range.getBoundingClientRect();
+    if (br.width === 0 && br.height === 0) return null;
+    return br.left + br.width / 2 - trRect.left;
+  } catch {
+    return null;
+  }
 }
 
 function applyTrailAndDot(opts: {
@@ -51,7 +69,7 @@ export function FairTripSplash() {
   const lastAtRef = useRef(0);
   const hideTimerRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
   const wasHiddenRef = useRef(false);
-  const letterRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const tripTextRef = useRef<HTMLSpanElement | null>(null);
   const stackRef = useRef<HTMLDivElement | null>(null);
   const wordClipRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
@@ -124,19 +142,9 @@ export function FairTripSplash() {
     const track = trackRef.current;
     const trail = trailRef.current;
     const dot = dotRef.current;
+    const tripEl = tripTextRef.current;
 
-    const letterEls = TRIP_CHARS.map((_, idx) => letterRefs.current[idx]).filter(Boolean) as HTMLElement[];
-
-    if (
-      !visible ||
-      !stack ||
-      !wordClip ||
-      !track ||
-      !trail ||
-      !dot ||
-      letterEls.length !== TRIP_CHARS.length
-    )
-      return;
+    if (!visible || !stack || !wordClip || !track || !trail || !dot || !tripEl) return;
 
     const reducedMotion =
       typeof window !== "undefined" &&
@@ -156,16 +164,11 @@ export function FairTripSplash() {
       const trRect = track.getBoundingClientRect();
       const wcRect = wordClip.getBoundingClientRect();
       const trailLeftPx = Math.max(0, Math.round(wcRect.left - trRect.left));
-      const centers = letterEls.map((el) => {
-        const r = el.getBoundingClientRect();
-        return r.left + r.width / 2 - trRect.left;
-      });
-      const endCx = centers[centers.length - 1];
+      const endFromGlyph = measurePCenterX(tripEl, trRect);
+      const endCx = endFromGlyph ?? NaN;
       const startCx = trailLeftPx + radiusPx;
       return { trailLeftPx, startCx, endCx };
     };
-
-    const durationMs = 1680;
 
     if (reducedMotion) {
       const { trailLeftPx, startCx, endCx } = measureGeometry();
@@ -211,7 +214,7 @@ export function FairTripSplash() {
 
       const frame = (): void => {
         const now = performance.now();
-        const u = Math.min(1, (now - t0) / durationMs);
+        const u = Math.min(1, (now - t0) / WIPE_DURATION_MS);
         const centerX = cx0 + u * (cx1 - cx0);
 
         applyTrailAndDot({
@@ -243,7 +246,7 @@ export function FairTripSplash() {
 
     let bootAttempts = 0;
     function boot(): void {
-      const laidOut = letterEls.every((el) => el.getBoundingClientRect().width > 0.5);
+      const laidOut = tripEl.getBoundingClientRect().width > 1;
       bootAttempts++;
       if (!laidOut && bootAttempts < 32) {
         rafRef.current = globalThis.requestAnimationFrame(boot);
@@ -271,21 +274,7 @@ export function FairTripSplash() {
           <div className="fairtrip-splash__stack" ref={stackRef}>
             <div className="fairtrip-splash__word-clip" ref={wordClipRef}>
               <div className="fairtrip-splash__word-row" aria-hidden>
-                <span>Fair</span>
-                <span className="fairtrip-splash__trip">
-                  {TRIP_CHARS.map((ch, idx) => (
-                    <span
-                      key={`${replayKey}-${idx}`}
-                      ref={(el) => {
-                        letterRefs.current[idx] = el;
-                      }}
-                      className="fairtrip-splash__trip-letter"
-                      aria-hidden
-                    >
-                      {ch}
-                    </span>
-                  ))}
-                </span>
+                <span>Fair</span><span ref={tripTextRef} className="fairtrip-splash__trip">Trip</span>
               </div>
             </div>
             <div className="fairtrip-splash__track" ref={trackRef} aria-hidden>
