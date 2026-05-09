@@ -28,13 +28,35 @@ export async function pushTripAndExpenses(payload: unknown): Promise<void> {
   }
 }
 
+export type PullTripFetchResult =
+  | { ok: true; data: unknown }
+  | { ok: false; reason: "disabled" | "network" | "http"; status?: number };
+
+/** Fetch `/api/sync/pull` with explicit failure reasons (no silent null). */
+export async function pullTripFetch(tripCode: string): Promise<PullTripFetchResult> {
+  if (!API_PREFIX) return { ok: false, reason: "disabled" };
+  try {
+    const res = await fetch(
+      `${API_PREFIX}/sync/pull?tripCode=${encodeURIComponent(tripCode)}`
+    );
+    if (!res.ok) {
+      return { ok: false, reason: "http", status: res.status };
+    }
+    try {
+      return { ok: true, data: await res.json() };
+    } catch {
+      return { ok: false, reason: "http", status: res.status };
+    }
+  } catch {
+    return { ok: false, reason: "network" };
+  }
+}
+
+/** @deprecated Prefer pullTripFetch for error visibility */
 export async function pullTrip(tripCode: string): Promise<unknown | null> {
-  if (!API_PREFIX) return null;
-  const res = await fetch(
-    `${API_PREFIX}/sync/pull?tripCode=${encodeURIComponent(tripCode)}`
-  );
-  if (!res.ok) return null;
-  return res.json();
+  const r = await pullTripFetch(tripCode);
+  if (!r.ok) return null;
+  return r.data;
 }
 
 export async function uploadReceipt(

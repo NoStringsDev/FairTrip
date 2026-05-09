@@ -215,6 +215,11 @@ button {
   margin-bottom: 2px;
 }
 
+.trip-pull-sync__spinner-wrap {
+  display: block;
+  transform-origin: center center;
+}
+
 .trip-pull-sync__spinner {
   display: block;
   width: 22px;
@@ -507,6 +512,49 @@ button {
 .brand-picker__name {
   font-weight: 700;
   font-size: 0.95rem;
+}
+
+.trip-sync-toolbar.row {
+  margin: 0 0 10px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.trip-sync-bar__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface-strong);
+  color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.trip-sync-bar__btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.trip-sync-bar__btn--maybe-offline {
+  opacity: 0.82;
+}
+
+.trip-sync-bar__btn--busy .trip-sync-bar__icon {
+  animation: trip-pull-sync-spin 0.65s linear infinite;
+}
+
+.trip-pull-error {
+  margin: 4px 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: #b45309;
+  flex: 1;
+  min-width: 160px;
 }
 
 .trip-actions {

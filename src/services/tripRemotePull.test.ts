@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { PullMergeResult } from "./tripSync";
 
 const mockPull = vi.fn();
 
@@ -11,7 +12,7 @@ import { executeTripPull, scheduleDebouncedTripPull } from "./tripRemotePull";
 describe("tripRemotePull", () => {
   beforeEach(() => {
     mockPull.mockReset();
-    mockPull.mockResolvedValue(true);
+    mockPull.mockResolvedValue({ ok: true } satisfies PullMergeResult);
   });
 
   afterEach(() => {
@@ -20,8 +21,8 @@ describe("tripRemotePull", () => {
   });
 
   it("executeTripPull shares one in-flight request per tripCode", async () => {
-    let finish!: (v: boolean) => void;
-    const gate = new Promise<boolean>((res) => {
+    let finish!: (v: PullMergeResult) => void;
+    const gate = new Promise<PullMergeResult>((res) => {
       finish = res;
     });
     mockPull.mockImplementationOnce(() => gate);
@@ -30,16 +31,19 @@ describe("tripRemotePull", () => {
     const p2 = executeTripPull("TRIP-A");
 
     expect(mockPull).toHaveBeenCalledTimes(1);
-    finish(true);
+    finish({ ok: true });
 
-    await expect(Promise.all([p1, p2])).resolves.toEqual([true, true]);
+    await expect(Promise.all([p1, p2])).resolves.toEqual([
+      { ok: true },
+      { ok: true },
+    ]);
     expect(mockPull).toHaveBeenCalledTimes(1);
   });
 
   it("executeTripPull allows concurrent pulls for different trip codes", async () => {
     mockPull.mockImplementation(async (code: string) => {
       await new Promise<void>((r) => setTimeout(r, code === "A" ? 8 : 4));
-      return true;
+      return { ok: true } satisfies PullMergeResult;
     });
 
     await Promise.all([executeTripPull("A"), executeTripPull("B")]);

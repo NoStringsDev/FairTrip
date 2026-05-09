@@ -1,5 +1,6 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { executeTripPull } from "../services/tripRemotePull";
+import type { PullMergeResult } from "../services/tripSync";
 import { syncEnabled } from "../services/sync";
 
 const RELEASE_PULL_DY_PX = 36;
@@ -8,32 +9,34 @@ const TOUCH_RESISTANCE = 0.45;
 type Props = {
   tripCode: string;
   children: ReactNode;
+  onPullResult?: (r: PullMergeResult) => void;
 };
 
 /** Scroll region with touch pull-to-sync (visual indicator only). */
-export function TripPullSyncOutlet({ tripCode, children }: Props) {
+export function TripPullSyncOutlet({ tripCode, children, onPullResult }: Props) {
   const scrollEl = useRef<HTMLDivElement>(null);
   const [pullDy, setPullDy] = useState(0);
   const [syncing, setSyncing] = useState(false);
-  const enabled = typeof navigator !== "undefined" && navigator.onLine && syncEnabled();
+  const syncOn = syncEnabled();
 
   const touchStartY = useRef(0);
   const touchPulling = useRef(false);
   const maxPullDy = useRef(0);
 
   const runPull = useCallback(async () => {
-    if (!enabled) return;
+    if (!syncOn) return;
     setSyncing(true);
     try {
-      await executeTripPull(tripCode);
+      const r = await executeTripPull(tripCode);
+      onPullResult?.(r);
     } finally {
       setSyncing(false);
     }
-  }, [tripCode, enabled]);
+  }, [tripCode, syncOn, onPullResult]);
 
   useEffect(() => {
     const el = scrollEl.current;
-    if (!el || !enabled) return;
+    if (!el || !syncOn) return;
 
     function onTouchStart(e: TouchEvent) {
       if (el.scrollTop > 2) return;
@@ -80,7 +83,7 @@ export function TripPullSyncOutlet({ tripCode, children }: Props) {
       el.removeEventListener("touchend", onTouchEnd);
       el.removeEventListener("touchcancel", onTouchEnd);
     };
-  }, [enabled, runPull]);
+  }, [syncOn, runPull]);
 
   const showGlow = syncing || pullDy > 4;
   const progress = syncing ? 1 : Math.min(pullDy / RELEASE_PULL_DY_PX, 1);
