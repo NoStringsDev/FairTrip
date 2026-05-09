@@ -387,11 +387,14 @@ button {
 }
 
 .brand-header__inner--trip {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   column-gap: 8px;
-  row-gap: 0;
+  width: 100%;
 }
 
 .brand-header__col {
@@ -399,20 +402,26 @@ button {
 }
 
 .brand-header__col--logo {
-  justify-self: start;
+  flex: 0 0 auto;
+  align-self: center;
 }
 
 .brand-header__inner--trip .brand-header__wordmark {
-  width: min(132px, 28vw);
+  width: min(120px, 26vw);
   max-width: 100%;
 }
 
 .brand-header__col--meta {
-  justify-self: center;
+  flex: 1 1 0;
+  justify-self: unset;
+  min-width: 0;
+  align-self: center;
 }
 
 .brand-header__col--actions {
-  justify-self: end;
+  flex: 0 0 auto;
+  justify-self: unset;
+  align-self: center;
 }
 
 .brand-header__icon {
@@ -523,10 +532,10 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   padding: 0;
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid var(--glass-border);
   background: var(--glass-surface-strong);
   color: var(--accent);
@@ -639,7 +648,7 @@ button {
 }
 
 .sync-status--icon-only {
-  padding: 6px;
+  padding: 4px;
   gap: 0;
   min-width: 0;
 }
@@ -675,22 +684,63 @@ button {
   flex-direction: column;
   align-items: stretch;
   gap: 3px;
-  width: min(320px, 88vw);
+  width: min(320px, 92vw);
 }
 
 .fairtrip-splash__brand {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  margin-inline: auto;
+  vertical-align: top;
+}
+
+.fairtrip-splash__stack {
+  font-family: var(--font);
+  font-size: clamp(2.5rem, 11.5vw, 3.5rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  /* SVG: baseline / bar-top gap ≈ 2 units at 54px cap height */
+  gap: calc(2 / 54 * 1em);
   width: max-content;
   max-width: 100%;
   margin-inline: auto;
 }
 
+.fairtrip-splash__stack--muted {
+  visibility: hidden;
+}
+
+.fairtrip-splash__exact-logo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: auto;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+  object-fit: contain;
+  object-position: center center;
+  pointer-events: none;
+}
+
+.fairtrip-splash__exact-logo--on {
+  opacity: 1;
+}
+
 .fairtrip-splash__word-row {
-  font-family: var(--font);
-  font-size: clamp(2.55rem, 12vw, 3.65rem);
-  font-weight: 800;
-  letter-spacing: -0.04em;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
   line-height: 1;
-  color: var(--text);
+  color: inherit;
   display: flex;
   justify-content: center;
   align-items: baseline;
@@ -732,26 +782,20 @@ button {
 .fairtrip-splash__track {
   position: relative;
   width: 100%;
-  height: 18px;
+  flex: none;
   margin-top: 0;
   isolation: isolate;
 }
 
 .fairtrip-splash__line {
+  box-sizing: border-box;
   position: absolute;
-  left: 0;
   top: 50%;
   z-index: 0;
-  height: 5px;
-  width: 0;
   translate: 0 -50%;
   border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    rgba(244, 114, 182, 0.15),
-    #f472b6 42%,
-    #ec4899
-  );
+  /* Solid bar like designed-inline-break-wordmark.svg */
+  background: #f472b6;
   transform-origin: 0 50%;
   pointer-events: none;
 }
@@ -760,14 +804,17 @@ button {
   position: absolute;
   left: 0;
   top: 50%;
-  z-index: 1;
-  width: 14px;
-  height: 14px;
+  z-index: 2;
+  box-sizing: border-box;
   margin: 0;
   border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 4px 12px rgba(14, 165, 233, 0.45);
+  /* SVG circle fill #3b82f6; outline keeps contrast on gradients */
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.92), 0 3px 10px rgba(59, 130, 246, 0.35);
   pointer-events: none;
+}
+
+.fairtrip-splash__dot--logo-blue {
+  background: #3b82f6;
 }
 
 .trip-action-btn {
