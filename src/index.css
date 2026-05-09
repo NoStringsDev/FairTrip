@@ -190,60 +190,10 @@ button {
   padding-bottom: 8px;
 }
 
-.trip-pull-sync {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-  position: relative;
-}
-
-.trip-pull-sync__rail {
-  position: sticky;
-  top: 0;
-  z-index: 3;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  height: 0;
-  overflow: visible;
-  pointer-events: none;
-}
-
-.trip-pull-sync__rail--active {
-  margin-bottom: 2px;
-}
-
-.trip-pull-sync__spinner-wrap {
-  display: block;
-  transform-origin: center center;
-}
-
-.trip-pull-sync__spinner {
-  display: block;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 2px solid rgba(14, 165, 233, 0.28);
-  border-top-color: var(--accent);
-  box-sizing: border-box;
-  transform-origin: center;
-  transition: opacity 140ms ease;
-}
-
-.trip-pull-sync__spinner--spin {
-  animation: trip-pull-sync-spin 0.65s linear infinite;
-}
-
-@keyframes trip-pull-sync-spin {
+@keyframes fairtrip-spin {
   to {
     transform: rotate(360deg);
   }
-}
-
-.trip-pull-sync__content {
-  min-height: 100%;
 }
 
 .mobile-trip-nav-toggle {
@@ -545,7 +495,7 @@ button {
 }
 
 .trip-sync-bar__btn--busy .trip-sync-bar__icon {
-  animation: trip-pull-sync-spin 0.65s linear infinite;
+  animation: fairtrip-spin 0.65s linear infinite;
 }
 
 .trip-pull-error {

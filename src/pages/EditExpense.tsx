@@ -54,7 +54,7 @@ export function EditExpense() {
         setManualGbp("");
       }
     });
-  }, [expenseId, nav, trip.id]);
+  }, [expenseId, nav, trip]);
 
   const closed = Boolean(trip.closedAt);
 
