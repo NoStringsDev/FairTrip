@@ -47,7 +47,9 @@ Deploy (uses root [`wrangler.toml`](wrangler.toml) so D1/R2 bindings are include
 npm run deploy:worker
 ```
 
-Point `VITE_API_URL` in Pages env vars at your Worker URL (e.g. `https://fair-trip-api.<subdomain>.workers.dev`).
+**Hands-off:** merges to **`main`** also deploy via **GitHub Actions** — add the `CLOUDFLARE_API_TOKEN` secret once (see **[docs/DEPLOY.md](docs/DEPLOY.md)**).
+
+Point `VITE_API_URL` in Pages env vars at your Worker URL (e.g. `https://fair-trip-api.<subdomain>.workers.dev`) if the app is not served from the same Worker origin.
 
 ## Tests
 
