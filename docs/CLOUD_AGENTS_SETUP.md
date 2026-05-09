@@ -29,7 +29,7 @@ This repo is ready for [Cursor Cloud Agents](https://cursor.com/docs/cloud-agent
 |--------------|--------|
 | `npm test` / `npm run build` | Usually **no secrets** — Vitest + Vite build are local. |
 | Optional API in tests | If you add integration tests hitting a Worker, set e.g. `VITE_API_URL` to a **throwaway** or mock URL; do not paste production secrets into chat. |
-| `wrangler deploy` / D1 / R2 | **GitHub Actions** (recommended hands-off): add repo secret **`CLOUDFLARE_API_TOKEN`** — see **[DEPLOY.md](./DEPLOY.md)**. Pushes to **`main`** run `npm run deploy:worker` automatically. For **Cursor Cloud Agents** only, prefer **not** running deploy unless you intend it; if you do, use **`CLOUDFLARE_API_TOKEN`** in Cursor Cloud secrets with minimal scope. Deployments must use **[`wrangler.toml`](../wrangler.toml)** at the repo root (`npm run deploy:worker`): never add a competing root **`wrangler.jsonc`** without D1/R2 or bindings can drop. |
+| `wrangler deploy` / D1 / R2 | **GitHub Actions**: repo secrets **`CLOUDFLARE_API_TOKEN`** **and** **`CLOUDFLARE_ACCOUNT_ID`** (non-interactive Wrangler requires both) — **[DEPLOY.md](./DEPLOY.md)**. Cursor Cloud Agents, if deploying: same pair with minimal scopes. Deployments must use **[`wrangler.toml`](../wrangler.toml)**; never add a root **`wrangler.jsonc`** that omits bindings. |
 
 FairTrip’s app optionally uses **`VITE_API_URL`** for sync ([README](../README.md)); unit tests in this repo do not require it unless you change tests.
 
