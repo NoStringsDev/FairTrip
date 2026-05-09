@@ -3,8 +3,10 @@ import { liveQuery } from "dexie";
 import { Link, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 import { db } from "../db/database";
 import type { Trip } from "../types";
+import { TripPullSyncOutlet } from "../components/TripPullSyncOutlet";
 import { FloatingAddButton } from "../components/FloatingAddButton";
 import { MobileTripNav } from "../components/MobileTripNav";
+import { useTripRemoteSyncCoordinator } from "../hooks/useTripRemoteSyncCoordinator";
 import { flushSyncQueue } from "../services/tripSync";
 import { normalizeTrip } from "../lib/tripNormalize";
 import { setLastTripId } from "../lib/lastTrip";
@@ -69,6 +71,8 @@ export function TripLayout() {
       window.removeEventListener("online", onOnline);
     };
   }, []);
+
+  useTripRemoteSyncCoordinator(trip?.tripCode ?? null);
 
   if (!tripId) return null;
 
@@ -144,7 +148,9 @@ export function TripLayout() {
           </div>
         </details>
         {!hideSectionToggle ? <MobileTripNav tripId={tripId} /> : null}
-        <Outlet context={{ trip }} />
+        <TripPullSyncOutlet tripCode={trip.tripCode}>
+          <Outlet context={{ trip }} />
+        </TripPullSyncOutlet>
       </div>
       <FloatingAddButton tripId={tripId} />
     </div>

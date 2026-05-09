@@ -9,8 +9,6 @@ import { effectiveGbpFromExpense } from "../domain/effective";
 import { normalizeExpense } from "../lib/expenseNormalize";
 import { normalizeTrip } from "../lib/tripNormalize";
 import { splitSummary } from "../lib/expenseLabels";
-import { pullAndMergeTrip } from "../services/tripSync";
-import { syncEnabled } from "../services/sync";
 
 type Ctx = { trip: Trip };
 
@@ -42,31 +40,12 @@ export function History() {
       const rows = await db.expenses.where("tripId").equals(trip.id).toArray();
       return rows.sort((a, b) => b.expenseTimestamp - a.expenseTimestamp);
     }).subscribe((next) => {
-      let changed = false;
-      setExpenses((prev) => {
-        changed = !sameExpenseRows(prev, next);
-        return changed ? next : prev;
-      });
-      if (changed) {
-        window.dispatchEvent(
-          new CustomEvent(EXPENSES_UPDATED_EVENT, { detail: { tripId: trip.id } })
-        );
-      }
+      setExpenses((prev) => (sameExpenseRows(prev, next) ? prev : next));
     });
     return () => {
       subscription.unsubscribe();
     };
   }, [trip.id]);
-
-  useEffect(() => {
-    if (!syncEnabled()) return;
-    const id = window.setInterval(() => {
-      void pullAndMergeTrip(trip.tripCode);
-    }, 3000);
-    return () => {
-      window.clearInterval(id);
-    };
-  }, [trip.tripCode]);
 
   const filtered = useMemo(() => {
     return expenses.filter((e) => {
