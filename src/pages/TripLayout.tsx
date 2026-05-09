@@ -4,7 +4,6 @@ import { Link, Outlet, useLocation, useNavigate, useParams } from "react-router-
 import { db } from "../db/database";
 import type { Trip } from "../types";
 import { TripPullError } from "../components/TripPullError";
-import { TripPullSyncOutlet } from "../components/TripPullSyncOutlet";
 import { TripSyncBar } from "../components/TripSyncBar";
 import { FloatingAddButton } from "../components/FloatingAddButton";
 import { MobileTripNav } from "../components/MobileTripNav";
@@ -164,9 +163,7 @@ export function TripLayout() {
           </div>
         </details>
         {!hideSectionToggle ? <MobileTripNav tripId={tripId} /> : null}
-        <TripPullSyncOutlet tripCode={trip.tripCode} onPullResult={onPullResult}>
-          <Outlet context={{ trip }} />
-        </TripPullSyncOutlet>
+        <Outlet context={{ trip }} />
       </div>
       <FloatingAddButton tripId={tripId} />
     </div>

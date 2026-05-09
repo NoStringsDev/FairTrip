@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { db } from "../db/database";
 import { clearLastTripId, getLastTripId, setLastTripId } from "../lib/lastTrip";
@@ -14,7 +14,7 @@ export function Welcome() {
   const [lastTripName, setLastTripName] = useState<string | null>(null);
   const autoJoinAttempted = useRef(false);
 
-  async function attemptJoin(codeInput: string): Promise<boolean> {
+  const attemptJoin = useCallback(async (codeInput: string): Promise<boolean> => {
     const code = codeInput.trim().toUpperCase();
     if (!code) {
       setErr("Enter trip code");
@@ -33,7 +33,7 @@ export function Welcome() {
       setErr(e instanceof Error ? e.message : "Failed");
       return false;
     }
-  }
+  }, [nav]);
 
   async function joinTrip() {
     setBusy(true);
@@ -76,7 +76,7 @@ export function Welcome() {
     setBusy(true);
     setErr(search.get("joinError") ? "Shared link failed. Try again below." : null);
     void attemptJoin(code).finally(() => setBusy(false));
-  }, [search]);
+  }, [search, attemptJoin]);
 
   async function goToLastTrip() {
     const lastTripId = getLastTripId();
