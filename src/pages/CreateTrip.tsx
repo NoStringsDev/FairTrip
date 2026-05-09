@@ -112,6 +112,13 @@ export function CreateTrip() {
   async function finish() {
     setBusy(true);
     try {
+      let tripCode = generateTripCode();
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        const n = await db.trips.where("tripCode").equals(tripCode).count();
+        if (n === 0) break;
+        tripCode = generateTripCode();
+      }
+
       const entities: TripEntity[] = entityDrafts.map((draft) => ({
         id: newId(),
         name: draft.name.trim(),
@@ -129,7 +136,7 @@ export function CreateTrip() {
         homeCurrency,
         tripCurrency,
         settlementCurrency: "GBP",
-        tripCode: generateTripCode(),
+        tripCode,
         entities,
         createdAt: Date.now(),
         updatedAt: Date.now(),

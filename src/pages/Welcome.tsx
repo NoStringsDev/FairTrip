@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { db } from "../db/database";
 import { clearLastTripId, getLastTripId, setLastTripId } from "../lib/lastTrip";
+import { TRIP_CODE_LENGTH } from "../utils/id";
 import { resolveTripByCode } from "../services/tripAccess";
 import { normalizeTrip } from "../lib/tripNormalize";
 
@@ -129,11 +130,14 @@ export function Welcome() {
 
       <div className="card stack">
         <div className="field">
-          <label>Join with trip code</label>
+          <label>Join with trip code ({TRIP_CODE_LENGTH} characters)</label>
           <input
             value={joinCode}
-            onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-            placeholder="e.g. ABC12XYZ"
+            maxLength={TRIP_CODE_LENGTH}
+            onChange={(e) =>
+              setJoinCode(e.target.value.toUpperCase().slice(0, TRIP_CODE_LENGTH))
+            }
+            placeholder="e.g. X7K2"
             autoCapitalize="characters"
           />
         </div>

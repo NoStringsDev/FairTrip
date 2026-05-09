@@ -381,7 +381,8 @@ button {
   max-width: 520px;
   margin: 0 auto;
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
 }
@@ -399,27 +400,45 @@ button {
 }
 
 .brand-header__meta {
-  flex: 1;
+  flex: 1 1 160px;
   display: flex;
   flex-direction: column;
   gap: 1px;
-  min-width: 0;
+  min-width: 120px;
 }
 
 .brand-header__trip-name {
   font-size: 1rem;
   margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
 }
 
 .brand-header__trip-code {
   margin: 0;
   font-size: 0.82rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.brand-header__sync-cluster {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.brand-header__below {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 16px 6px;
+  width: 100%;
+}
+
+.brand-header__below .trip-pull-error {
+  margin: 0;
 }
 
 .brand-picker {
@@ -464,10 +483,8 @@ button {
   font-size: 0.95rem;
 }
 
-.trip-sync-toolbar.row {
-  margin: 0 0 10px;
-  flex-wrap: wrap;
-  align-items: flex-start;
+.trip-sync-bar {
+  margin: 0;
 }
 
 .trip-sync-bar__btn {
@@ -503,8 +520,7 @@ button {
   font-size: 0.8125rem;
   line-height: 1.35;
   color: #b45309;
-  flex: 1;
-  min-width: 160px;
+  width: 100%;
 }
 
 .trip-actions {
@@ -588,6 +604,149 @@ button {
 
 .sync-status--live .sync-status__dot {
   background: #22c55e;
+}
+
+.sync-status--icon-only {
+  padding: 6px;
+  gap: 0;
+  min-width: 0;
+}
+
+.fairtrip-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(16px, env(safe-area-inset-top));
+  background: radial-gradient(
+      800px 500px at 50% -20%,
+      rgba(244, 114, 182, 0.12),
+      transparent 65%
+    ),
+    var(--bg);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.42s ease,
+    visibility 0.42s;
+}
+
+.fairtrip-splash--visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.fairtrip-splash__scene {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: min(320px, 88vw);
+}
+
+.fairtrip-splash__word-row {
+  font-family: var(--font);
+  font-size: clamp(2.55rem, 12vw, 3.65rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--text);
+  display: flex;
+  justify-content: center;
+}
+
+.fairtrip-splash__fair {
+  animation: splashFairLetters 0.45s ease-out forwards;
+  opacity: 0;
+}
+
+.fairtrip-splash__trip {
+  margin-left: 0.06em;
+  opacity: 0;
+  animation: splashTripReveal 2.05s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes splashFairLetters {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes splashTripReveal {
+  0%,
+  61% {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  66% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.fairtrip-splash__track {
+  position: relative;
+  width: 100%;
+  height: 18px;
+  margin-top: 4px;
+}
+
+.fairtrip-splash__line {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 5px;
+  width: 0;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(244, 114, 182, 0.15),
+    #f472b6 42%,
+    #ec4899
+  );
+  animation: splashLineDraw 1.65s cubic-bezier(0.4, 0, 0.2, 1) 0.28s forwards;
+}
+
+.fairtrip-splash__dot {
+  position: absolute;
+  left: 0;
+  bottom: 2px;
+  width: 14px;
+  height: 14px;
+  margin-left: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 4px 12px rgba(14, 165, 233, 0.45);
+  animation: splashDotTravel 1.65s cubic-bezier(0.4, 0, 0.2, 1) 0.28s forwards;
+}
+
+@keyframes splashLineDraw {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes splashDotTravel {
+  from {
+    left: 0;
+  }
+  to {
+    left: calc(100% - 14px);
+  }
 }
 
 .trip-action-btn {

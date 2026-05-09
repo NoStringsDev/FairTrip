@@ -1,18 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { liveQuery } from "dexie";
 import { Link, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 import { db } from "../db/database";
 import type { Trip } from "../types";
-import { TripPullError } from "../components/TripPullError";
-import { TripSyncBar } from "../components/TripSyncBar";
 import { FloatingAddButton } from "../components/FloatingAddButton";
 import { MobileTripNav } from "../components/MobileTripNav";
-import { useTripRemoteSyncCoordinator } from "../hooks/useTripRemoteSyncCoordinator";
-import {
-  flushSyncQueue,
-  formatPullMergeError,
-  type PullMergeResult,
-} from "../services/tripSync";
+import { flushSyncQueue } from "../services/tripSync";
 import { normalizeTrip } from "../lib/tripNormalize";
 import { setLastTripId } from "../lib/lastTrip";
 
@@ -37,12 +30,6 @@ export function TripLayout() {
   const [tripLookupState, setTripLookupState] = useState<"loading" | "missing" | "ready">(
     "loading"
   );
-  const [pullError, setPullError] = useState<string | null>(null);
-
-  const onPullResult = useCallback((r: PullMergeResult) => {
-    if (r.ok) setPullError(null);
-    else setPullError(formatPullMergeError(r));
-  }, []);
 
   useEffect(() => {
     if (!tripId) return;
@@ -83,8 +70,6 @@ export function TripLayout() {
     };
   }, []);
 
-  useTripRemoteSyncCoordinator(trip?.tripCode ?? null, onPullResult);
-
   if (!tripId) return null;
 
   if (!trip || tripLookupState !== "ready") {
@@ -114,11 +99,12 @@ export function TripLayout() {
   async function shareTrip() {
     const shareUrl = new URL("/", window.location.origin);
     shareUrl.searchParams.set("tripCode", trip.tripCode);
-    const text = `Join my FairTrip: ${trip.name}`;
+    const title = `${trip.name} on FairTrip`;
+    const text = `You've got an invite! Join "${trip.name}" on FairTrip and we'll split costs fairly together. Tap the link — it only takes a moment.`;
     try {
       if (navigator.share) {
         await navigator.share({
-          title: `FairTrip: ${trip.name}`,
+          title,
           text,
           url: shareUrl.toString(),
         });
@@ -128,7 +114,7 @@ export function TripLayout() {
       // User cancelled or share failed: fallback to clipboard below.
     }
     try {
-      await navigator.clipboard.writeText(shareUrl.toString());
+      await navigator.clipboard.writeText(`${text}\n${shareUrl.toString()}`);
       alert("Trip link copied to clipboard");
     } catch {
       alert(`Share this link: ${shareUrl.toString()}`);
@@ -138,10 +124,6 @@ export function TripLayout() {
   return (
     <div className="trip-app">
       <div className="app-shell trip-app__inner">
-        <div className="trip-sync-toolbar row">
-          <TripSyncBar tripCode={trip.tripCode} onPullResult={onPullResult} />
-          <TripPullError message={pullError} />
-        </div>
         <details className="trip-actions">
           <summary>
             Trip actions
