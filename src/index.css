@@ -720,28 +720,6 @@ button {
   margin-inline: auto;
 }
 
-.fairtrip-splash__stack--muted {
-  visibility: hidden;
-}
-
-.fairtrip-splash__exact-logo {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  margin: auto;
-  padding: 0;
-  opacity: 0;
-  transition: opacity 0.22s ease;
-  object-fit: contain;
-  object-position: center center;
-  pointer-events: none;
-}
-
-.fairtrip-splash__exact-logo--on {
-  opacity: 1;
-}
-
 .fairtrip-splash__word-row {
   font-family: inherit;
   font-size: inherit;

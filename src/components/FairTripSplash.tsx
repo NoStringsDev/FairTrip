@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import splashWordmark from "../assets/branding/designed-inline-break-wordmark.svg";
 
 /** Debounce replay so tab switches don't flash the splash constantly. */
 export const SPLASH_COOLDOWN_MS = 90_000;
-/** How long the splash stays readable after the wordmark is shown (ms). */
+/** How long the splash stays readable after the motion completes (ms). */
 const SPLASH_HOLD_MS = 2850;
 
 /** Spans exist only to measure the final dot stop (centre of last letter "p"). */
@@ -49,7 +48,6 @@ function applyWordWipe(wordClipEl: HTMLElement, u: number): void {
 export function FairTripSplash() {
   const [visible, setVisible] = useState(true);
   const [replayKey, setReplayKey] = useState(0);
-  const [showExactLogo, setShowExactLogo] = useState(false);
   const lastAtRef = useRef(0);
   const hideTimerRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
   const wasHiddenRef = useRef(false);
@@ -80,7 +78,6 @@ export function FairTripSplash() {
     if (!force && now - lastAtRef.current < SPLASH_COOLDOWN_MS) return;
     clearHide();
     lastAtRef.current = now;
-    setShowExactLogo(false);
     setReplayKey((k) => k + 1);
     setVisible(true);
     hideTimerRef.current = globalThis.setTimeout(() => {
@@ -182,7 +179,7 @@ export function FairTripSplash() {
         linePx,
       });
       applyWordWipe(wordClip, 1);
-      setShowExactLogo(true);
+      wordClip.style.willChange = "auto";
       return () => {};
     }
 
@@ -233,7 +230,6 @@ export function FairTripSplash() {
           rafRef.current = null;
           wordClip.style.willChange = "auto";
           applyWordWipe(wordClip, 1);
-          setShowExactLogo(true);
         }
       };
 
@@ -242,7 +238,6 @@ export function FairTripSplash() {
 
     function wcFallbackSpan(wcEl: HTMLElement): number {
       const a = wcEl.getBoundingClientRect().width;
-      /* Bar length scales with word clip width (~SVG proportions vs full word row). */
       return Math.min(a * 0.62, Math.max(a * 0.45, 64));
     }
 
@@ -273,10 +268,7 @@ export function FairTripSplash() {
     >
       <div key={replayKey} className="fairtrip-splash__scene">
         <div className="fairtrip-splash__brand">
-          <div
-            className={`fairtrip-splash__stack${showExactLogo ? " fairtrip-splash__stack--muted" : ""}`}
-            ref={stackRef}
-          >
+          <div className="fairtrip-splash__stack" ref={stackRef}>
             <div className="fairtrip-splash__word-clip" ref={wordClipRef}>
               <div className="fairtrip-splash__word-row" aria-hidden>
                 <span>Fair</span>
@@ -301,14 +293,6 @@ export function FairTripSplash() {
               <span className="fairtrip-splash__dot fairtrip-splash__dot--logo-blue" ref={dotRef} />
             </div>
           </div>
-          <img
-            className={`fairtrip-splash__exact-logo${showExactLogo ? " fairtrip-splash__exact-logo--on" : ""}`}
-            src={splashWordmark}
-            alt=""
-            width={320}
-            height={88}
-            decoding="sync"
-          />
         </div>
       </div>
     </div>
