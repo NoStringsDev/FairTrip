@@ -254,6 +254,32 @@ export default {
         return json({ trip, expenses: expenses.results ?? [] }, env, origin);
       }
 
+      if (url.pathname === "/api/sync/rev" && request.method === "GET") {
+        const tripCode = url.searchParams.get("tripCode");
+        if (!tripCode) return json({ error: "tripCode" }, env, origin, 400);
+        const row = await env.DB.prepare(
+          `SELECT
+             t.updated_at AS trip_ut,
+             COALESCE(
+               (SELECT MAX(e.updated_at) FROM expenses e WHERE e.trip_id = t.id),
+               0
+             ) AS exp_max
+           FROM trips t
+           WHERE t.trip_code = ?`
+        )
+          .bind(tripCode)
+          .first<{ trip_ut: number; exp_max: number }>();
+        if (!row)
+          return json({ rev: null }, env, origin);
+        const tripUt = Number(row.trip_ut);
+        const expMax = Number(row.exp_max);
+        const rev =
+          Number.isFinite(tripUt) && Number.isFinite(expMax)
+            ? Math.max(tripUt, expMax)
+            : null;
+        return json({ rev }, env, origin);
+      }
+
       if (url.pathname === "/api/receipts" && request.method === "POST") {
         const form = await request.formData();
         const tripCode = String(form.get("tripCode") ?? "");
