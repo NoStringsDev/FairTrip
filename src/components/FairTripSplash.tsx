@@ -2,13 +2,13 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 
 /** Debounce replay so tab switches don't flash the splash constantly. */
 export const SPLASH_COOLDOWN_MS = 90_000;
-/** ~33% faster than prior 1680ms (same feel, shorter hold). */
-const WIPE_DURATION_MS = 1120;
+/** Wipe + dot travel duration (halved from 1120ms). */
+const WIPE_DURATION_MS = 560;
 
-/** Time splash stays on screen after wipe/dot motion ends (was ~1730ms from 2850 − 1120). */
-const SPLASH_TAIL_MS = 865;
+/** Hold after motion before dismiss (halved from 865ms). */
+const SPLASH_TAIL_MS = 432;
 
-/** Total overlay time = motion + tail before fade. */
+/** Total visible splash ≈ half of prior ~1985ms. */
 const SPLASH_HOLD_MS = WIPE_DURATION_MS + SPLASH_TAIL_MS;
 
 /**
