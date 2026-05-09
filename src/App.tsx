@@ -9,11 +9,13 @@ import { EditExpense } from "./pages/EditExpense";
 import { EditTrip } from "./pages/EditTrip";
 import { HomeGate } from "./pages/HomeGate";
 import { AppBrandHeader } from "./components/AppBrandHeader";
+import { FairTripSplash } from "./components/FairTripSplash";
 
 export default function App() {
   return (
     <BrowserRouter>
       <div className="app-root">
+        <FairTripSplash />
         <AppBrandHeader />
         <Routes>
           <Route path="/" element={<HomeGate />} />

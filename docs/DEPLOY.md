@@ -66,6 +66,20 @@ The Worker serves **`GET /api/sync/rev`** (tiny JSON watermark) alongside **`GET
 
 **`assets.not_found_handling = "single-page-application"`** ensures deep routes like `/trip/…/balance` return **`index.html`** on full reload.
 
+### Shortening an existing trip code on D1 (example)
+
+Versions of the app from here on generate **4-character** trip codes. To fix a legacy long code (e.g. `SNVJBL8K`) on the server:
+
+1. Invent a **new** unused **4-letter** code from the usual charset (**`A`-`Z`**, **`2`-`9`**, excluding ambiguous **`O`,`I`,`0`,`1`**).
+2. Run against production D1 (replace `fair-trip-db` if your binding name differs):
+
+```bash
+npx wrangler d1 execute fair-trip-db --remote --command "UPDATE trips SET trip_code='ABCD' WHERE trip_code='SNVJBL8K';"
+```
+
+3. Substitute **`ABCD`** for your chosen code. Ensure it does not collide with another row (`SELECT trip_code FROM trips WHERE trip_code='ABCD'` first if unsure).
+4. **Share links** with the old query string (`?tripCode=SNVJBL8K`) stop working until you share fresh links. Clients pick up the new code on the next successful **pull** into IndexedDB (open trip / sync).
+
 ## If Cursor or another automation also deploys
 
 Two deploy pipelines can race. Prefer one (e.g. GitHub Actions only).
