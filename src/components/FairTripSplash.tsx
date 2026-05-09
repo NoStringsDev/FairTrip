@@ -2,11 +2,14 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 
 /** Debounce replay so tab switches don't flash the splash constantly. */
 export const SPLASH_COOLDOWN_MS = 90_000;
-/** How long the splash stays readable after the motion completes (ms). */
-const SPLASH_HOLD_MS = 2850;
-
 /** ~33% faster than prior 1680ms (same feel, shorter hold). */
 const WIPE_DURATION_MS = 1120;
+
+/** Time splash stays on screen after wipe/dot motion ends (was ~1730ms from 2850 − 1120). */
+const SPLASH_TAIL_MS = 865;
+
+/** Total overlay time = motion + tail before fade. */
+const SPLASH_HOLD_MS = WIPE_DURATION_MS + SPLASH_TAIL_MS;
 
 /**
  * Matches `designed-inline-break-wordmark.svg` (viewBox 0 0 320 88): text cap ~54 units,
