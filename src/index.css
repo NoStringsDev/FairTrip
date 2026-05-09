@@ -695,6 +695,14 @@ button {
   vertical-align: top;
 }
 
+.fairtrip-splash__word-clip {
+  width: max-content;
+  max-width: 100%;
+  margin-inline: auto;
+  contain: paint;
+  transform: translateZ(0);
+}
+
 .fairtrip-splash__stack {
   font-family: var(--font);
   font-size: clamp(2.5rem, 11.5vw, 3.5rem);
@@ -747,11 +755,6 @@ button {
   flex-wrap: nowrap;
 }
 
-.fairtrip-splash__fair {
-  animation: splashFairLetters 0.45s ease-out forwards;
-  opacity: 0;
-}
-
 .fairtrip-splash__trip {
   margin-left: 0.06em;
   display: inline-flex;
@@ -759,24 +762,8 @@ button {
 }
 
 .fairtrip-splash__trip-letter {
-  opacity: 0;
   display: inline-block;
   min-width: 0.52ch;
-}
-
-.fairtrip-splash__trip-letter--on {
-  opacity: 1;
-}
-
-@keyframes splashFairLetters {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .fairtrip-splash__track {
