@@ -27,6 +27,10 @@ npm run deploy:worker
 
 Uses root [`wrangler.toml`](../wrangler.toml). Do **not** add a competing `wrangler.jsonc` at the repo root (see [`CLOUD_AGENTS_SETUP.md`](./CLOUD_AGENTS_SETUP.md)).
 
+### API routes
+
+The Worker serves **`GET /api/sync/rev`** (tiny JSON watermark) alongside **`GET /api/sync/pull`**. Older deployed versions only have `/pull`; update the Worker so foreground clients can check for remote changes cheaply between full merges.
+
 ### Deep links and browser refresh
 
 The Worker config sets **`assets.not_found_handling = "single-page-application"`** so routes like `/trip/…/balance` return `index.html` on a full page reload. Without it, Cloudflare’s asset layer handles navigation **before** your Worker script runs, so deep links can fail with “site can’t be reached” / 404 while in-app navigation still works.

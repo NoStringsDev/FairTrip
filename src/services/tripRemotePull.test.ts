@@ -3,6 +3,13 @@ import type { PullMergeResult } from "./tripSync";
 
 const mockPull = vi.fn();
 
+vi.mock("./tripRevisionCache", () => ({
+  snapshotTripRevisionNow: vi.fn().mockResolvedValue(undefined),
+  clearTripRevisionCache: vi.fn(),
+  hasTripRevisionWatermark: vi.fn().mockReturnValue(true),
+  getCachedTripRevision: vi.fn(() => 1),
+}));
+
 vi.mock("./tripSync", () => ({
   pullAndMergeTrip: (code: string) => mockPull(code),
 }));

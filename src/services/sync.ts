@@ -52,6 +52,37 @@ export async function pullTripFetch(tripCode: string): Promise<PullTripFetchResu
   }
 }
 
+export type FetchTripRevisionResult =
+  | { ok: true; rev: number | null }
+  | { ok: false; reason: "disabled" | "network" | "http"; status?: number };
+
+/** Small JSON hint for stale checks: `/api/sync/rev` (~tens of bytes). */
+export async function fetchTripRevision(tripCode: string): Promise<FetchTripRevisionResult> {
+  if (!API_PREFIX) return { ok: false, reason: "disabled" };
+  try {
+    const res = await fetch(
+      `${API_PREFIX}/sync/rev?tripCode=${encodeURIComponent(tripCode)}`
+    );
+    if (!res.ok) {
+      return { ok: false, reason: "http", status: res.status };
+    }
+    try {
+      const data = (await res.json()) as { rev?: number | null };
+      if (!data || typeof data !== "object" || !("rev" in data)) {
+        return { ok: false, reason: "http", status: res.status };
+      }
+      const raw = data.rev;
+      if (raw === null) return { ok: true, rev: null };
+      if (typeof raw === "number" && Number.isFinite(raw)) return { ok: true, rev: raw };
+      return { ok: false, reason: "http", status: res.status };
+    } catch {
+      return { ok: false, reason: "http", status: res.status };
+    }
+  } catch {
+    return { ok: false, reason: "network" };
+  }
+}
+
 /** @deprecated Prefer pullTripFetch for error visibility */
 export async function pullTrip(tripCode: string): Promise<unknown | null> {
   const r = await pullTripFetch(tripCode);

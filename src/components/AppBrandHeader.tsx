@@ -57,7 +57,7 @@ export function AppBrandHeader() {
   const syncLabel = !online
     ? "Offline (cached data)"
     : syncEnabled()
-      ? "Online (live sync)"
+      ? "Online · background sync when open"
       : "Online (local-only)";
   const syncTone = !online ? "offline" : syncEnabled() ? "live" : "local";
 

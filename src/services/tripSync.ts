@@ -3,6 +3,7 @@ import type { Expense } from "../types";
 import { mergePullIntoLocal } from "../lib/mergeRemote";
 import type { RemoteExpenseRow, RemoteTripRow } from "../lib/mergeRemote";
 import { pullTripFetch, pushTripAndExpenses, syncEnabled } from "./sync";
+import { snapshotTripRevisionNow } from "./tripRevisionCache";
 import { normalizeTrip } from "../lib/tripNormalize";
 import { normalizeExpense } from "../lib/expenseNormalize";
 
@@ -60,6 +61,7 @@ export async function pushLocalTrip(tripId: string): Promise<void> {
   const expenses = await db.expenses.where("tripId").equals(tripId).toArray();
   const normalized: Expense[] = expenses.map((e) => normalizeExpense(e, trip));
   await pushTripAndExpenses({ trip, expenses: normalized });
+  await snapshotTripRevisionNow(beforeMerge.tripCode);
 }
 
 export async function pullAndMergeTrip(tripCode: string): Promise<PullMergeResult> {
