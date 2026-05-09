@@ -40,8 +40,8 @@ export function TripSyncBar({ tripCode, onPullResult }: Props) {
       >
         <svg
           className="trip-sync-bar__icon"
-          width="22"
-          height="22"
+          width="19"
+          height="19"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"

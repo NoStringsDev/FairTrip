@@ -79,28 +79,34 @@ export function AppBrandHeader() {
 
   return (
     <header className="brand-header" aria-label="FairTrip brand">
-      <div className="brand-header__inner">
-        <img className="brand-header__wordmark" src={inlineBreakWordmark} alt="FairTrip" />
+      <div className={`brand-header__inner${trip ? " brand-header__inner--trip" : ""}`}>
+        <div className="brand-header__col brand-header__col--logo">
+          <img className="brand-header__wordmark" src={inlineBreakWordmark} alt="FairTrip" />
+        </div>
         {trip ? (
-          <div className="brand-header__meta">
-            <h1 className="title brand-header__trip-name">{trip.name}</h1>
-            <p className="sub brand-header__trip-code">
-              Code: <strong>{trip.tripCode}</strong>
-            </p>
-          </div>
-        ) : null}
-        {trip ? (
-          <div className="brand-header__sync-cluster">
-            <div
-              className={`sync-status sync-status--${syncTone} sync-status--icon-only`}
-              role="status"
-              aria-label={syncAriaLabel}
-              title={syncAriaLabel}
-            >
-              <span className="sync-status__dot" aria-hidden />
+          <>
+            <div className="brand-header__col brand-header__col--meta">
+              <div className="brand-header__meta">
+                <h1 className="title brand-header__trip-name">{trip.name}</h1>
+                <p className="sub brand-header__trip-code">
+                  Code: <strong>{trip.tripCode}</strong>
+                </p>
+              </div>
             </div>
-            <TripSyncBar tripCode={trip.tripCode} onPullResult={onPullResult} />
-          </div>
+            <div className="brand-header__col brand-header__col--actions">
+              <div className="brand-header__sync-cluster">
+                <div
+                  className={`sync-status sync-status--${syncTone} sync-status--icon-only`}
+                  role="status"
+                  aria-label={syncAriaLabel}
+                  title={syncAriaLabel}
+                >
+                  <span className="sync-status__dot" aria-hidden />
+                </div>
+                <TripSyncBar tripCode={trip.tripCode} onPullResult={onPullResult} />
+              </div>
+            </div>
+          </>
         ) : null}
       </div>
       {trip ? (
