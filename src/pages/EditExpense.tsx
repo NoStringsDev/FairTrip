@@ -15,7 +15,7 @@ type Ctx = { trip: Trip };
 
 export function EditExpense() {
   const { trip: rawTrip } = useOutletContext<Ctx>();
-  const trip = normalizeTrip(rawTrip);
+  const trip = useMemo(() => normalizeTrip(rawTrip), [rawTrip]);
   const { expenseId } = useParams();
   const nav = useNavigate();
   const cameraInputRef = useRef<HTMLInputElement>(null);
