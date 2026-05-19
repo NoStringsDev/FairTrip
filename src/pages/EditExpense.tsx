@@ -47,7 +47,7 @@ export function EditExpense() {
       setSplitMode(ex.splitMode);
       setBeneficiary(ex.beneficiaryEntityId ?? trip.entities[0]?.id ?? "");
       setNote(e.note);
-      setWhen(new Date(e.expenseTimestamp).toISOString().slice(0, 16));
+      setWhen(formatDateTimeLocal(new Date(e.expenseTimestamp)));
       if (e.manualGbpMinorUnits != null) {
         setManualGbp((e.manualGbpMinorUnits / 100).toFixed(2));
       } else {
