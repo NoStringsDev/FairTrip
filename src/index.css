@@ -367,6 +367,24 @@ button {
   flex-direction: column;
 }
 
+.app-footer {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 16px calc(12px + env(safe-area-inset-bottom));
+  text-align: center;
+}
+
+.app-footer__link {
+  display: inline-block;
+  color: rgba(100, 116, 139, 0.8);
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+.app-footer__link:hover {
+  color: rgba(71, 85, 105, 0.95);
+}
+
 .brand-header {
   position: sticky;
   top: 0;

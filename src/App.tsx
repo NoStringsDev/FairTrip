@@ -31,6 +31,16 @@ export default function App() {
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <footer className="app-footer">
+          <a
+            className="app-footer__link"
+            href="https://nostrings.dev"
+            target="_blank"
+            rel="noreferrer"
+          >
+            © Built by NoStrings.dev
+          </a>
+        </footer>
       </div>
     </BrowserRouter>
   );
