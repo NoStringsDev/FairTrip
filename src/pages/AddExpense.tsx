@@ -75,7 +75,7 @@ export function AddExpense() {
         }
         if (draft.detectedDate) {
           const d = new Date(draft.detectedDate + "T12:00:00");
-          setWhen(d.toISOString().slice(0, 16));
+          setWhen(formatDateTimeLocal(d));
         }
         if (draft.detectedMerchant) setNote(draft.detectedMerchant);
       } finally {
